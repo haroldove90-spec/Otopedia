@@ -142,7 +142,7 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
 
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* Sidebar Tabs - Horizontal on mobile, Vertical on desktop */}
-        <div className="lg:w-64 bg-slate-50 border-b lg:border-b-0 lg:border-r border-slate-100 p-2 lg:p-4 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible no-scrollbar sticky top-[72px] lg:top-0 z-20">
+        <div className="lg:w-64 bg-slate-50 border-b lg:border-b-0 lg:border-r border-slate-100 p-2 lg:p-6 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible no-scrollbar sticky top-[72px] lg:top-[120px] z-20">
           {tabs.map((tab) => (
             <button
               key={tab.id}
