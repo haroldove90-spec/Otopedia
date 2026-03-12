@@ -37,6 +37,7 @@ export interface ClinicalHistory {
   next_appointment?: string;
   created_at: string;
   patient?: Patient;
+  extracted_data?: any;
 }
 
 export interface DashboardMetrics {

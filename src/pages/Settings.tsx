@@ -11,7 +11,7 @@ export default function Settings() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 text-indigo-600">
+          <div className="flex items-center gap-3 text-primary">
             <SettingsIcon size={20} />
             <h3 className="font-bold">General</h3>
           </div>
@@ -22,7 +22,7 @@ export default function Settings() {
                 <p className="text-sm font-bold text-slate-800">Nombre de la Clínica</p>
                 <p className="text-xs text-slate-500">Aparecerá en los reportes PDF</p>
               </div>
-              <input type="text" defaultValue="Clínica Ortopédica Ove" className="bg-slate-50 border-none rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              <input type="text" defaultValue="Clínica Ortopédica Ove" className="bg-slate-50 border-none rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary outline-none" />
             </div>
             
             <div className="flex items-center justify-between">
@@ -30,7 +30,7 @@ export default function Settings() {
                 <p className="text-sm font-bold text-slate-800">Idioma</p>
                 <p className="text-xs text-slate-500">Interfaz del sistema</p>
               </div>
-              <select className="bg-slate-50 border-none rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <select className="bg-slate-50 border-none rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary outline-none">
                 <option>Español</option>
                 <option>English</option>
               </select>
@@ -39,7 +39,7 @@ export default function Settings() {
         </div>
 
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 text-indigo-600">
+          <div className="flex items-center gap-3 text-primary">
             <Bell size={20} />
             <h3 className="font-bold">Notificaciones</h3>
           </div>
@@ -50,7 +50,7 @@ export default function Settings() {
                 <p className="text-sm font-bold text-slate-800">Sonido de Alerta</p>
                 <p className="text-xs text-slate-500">Para nuevas citas agendadas</p>
               </div>
-              <input type="checkbox" defaultChecked className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" />
+              <input type="checkbox" defaultChecked className="w-4 h-4 text-primary rounded focus:ring-primary" />
             </div>
             
             <div className="flex items-center justify-between">
@@ -58,13 +58,13 @@ export default function Settings() {
                 <p className="text-sm font-bold text-slate-800">Recordatorios Diarios</p>
                 <p className="text-xs text-slate-500">Resumen de agenda por la mañana</p>
               </div>
-              <input type="checkbox" defaultChecked className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" />
+              <input type="checkbox" defaultChecked className="w-4 h-4 text-primary rounded focus:ring-primary" />
             </div>
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 text-indigo-600">
+          <div className="flex items-center gap-3 text-primary">
             <Shield size={20} />
             <h3 className="font-bold">Seguridad</h3>
           </div>
@@ -80,13 +80,13 @@ export default function Settings() {
         </div>
 
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 text-indigo-600">
+          <div className="flex items-center gap-3 text-primary">
             <Database size={20} />
             <h3 className="font-bold">Datos</h3>
           </div>
           
           <div className="space-y-4">
-            <button className="w-full py-2 bg-indigo-50 text-indigo-600 text-sm font-bold rounded-xl hover:bg-indigo-100 transition-colors">
+            <button className="w-full py-2 bg-primary-light text-primary text-sm font-bold rounded-xl hover:bg-primary/10 transition-colors">
               Exportar Base de Datos
             </button>
             <button className="w-full py-2 bg-red-50 text-red-600 text-sm font-bold rounded-xl hover:bg-red-100 transition-colors">

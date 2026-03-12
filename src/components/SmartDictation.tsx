@@ -67,9 +67,16 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
         
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
         
-        const prompt = `Analiza este dictado médico (${context}) y extrae la información estructurada en formato JSON. 
+        const prompt = `Analiza este dictado médico ortopédico (${context}) y extrae la información estructurada en formato JSON. 
         Si es una cita: extrae fecha, hora, motivo. 
-        Si es un historial: extrae diagnóstico, tratamiento, medicamentos y próxima cita.
+        Si es un historial clínico completo, intenta mapear los campos a esta estructura:
+        - identification: { occupation, laterality, sport }
+        - consultation: { pain_location, mechanism, pain_type, eva (número 1-10), evolution }
+        - background: { traumatic, surgical, systemic }
+        - physical_exam: { inspection, palpation, mobility, special_maneuvers, neurovascular }
+        - diagnostics: { imaging, laboratory }
+        - plan: { diagnosis, treatment_plan, prognosis }
+        
         Dictado: `;
 
         const response = await ai.models.generateContent({
@@ -84,19 +91,6 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
           ],
           config: {
             responseMimeType: "application/json",
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                diagnosis: { type: Type.STRING },
-                treatment: { type: Type.STRING },
-                medications: { type: Type.STRING },
-                next_appointment: { type: Type.STRING },
-                patient_name: { type: Type.STRING },
-                date: { type: Type.STRING },
-                time: { type: Type.STRING },
-                reason: { type: Type.STRING }
-              }
-            }
           }
         });
 
@@ -135,7 +129,7 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
         className={`p-2.5 rounded-full transition-all flex items-center justify-center ${
           isRecording 
             ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200' 
-            : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200'
+            : 'bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/20'
         } disabled:opacity-50`}
       >
         {isProcessing ? (
@@ -148,7 +142,7 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
       </button>
 
       {isProcessing && (
-        <div className="flex items-center gap-2 text-indigo-600 animate-pulse">
+        <div className="flex items-center gap-2 text-primary animate-pulse">
           <Sparkles size={16} />
           <span className="text-xs font-medium">IA Procesando...</span>
         </div>

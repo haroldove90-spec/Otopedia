@@ -9,8 +9,10 @@ import Login from './components/auth/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import AgendaDashboard from './pages/AgendaDashboard';
 import Patients from './pages/Patients';
+import History from './pages/History';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
+import InstallPWA from './components/InstallPWA';
 import { UserRole } from './types';
 
 export default function App() {
@@ -18,6 +20,7 @@ export default function App() {
 
   return (
     <Router>
+      <InstallPWA />
       <Routes>
         <Route path="/login" element={<Login />} />
         
@@ -60,7 +63,7 @@ export default function App() {
           path="/history" 
           element={
             <Layout role={role} onRoleChange={setRole}>
-              <AdminDashboard role={role} />
+              <History />
             </Layout>
           } 
         />

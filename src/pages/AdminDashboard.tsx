@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Calendar, 
@@ -28,7 +29,7 @@ import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, end
 import { es } from 'date-fns/locale';
 import { supabase } from '../lib/supabase';
 import { Appointment, Patient, ClinicalHistory, DashboardMetrics, UserRole } from '../types';
-import SmartDictation from '../components/SmartDictation';
+import ClinicalHistoryForm from '../components/ClinicalHistoryForm';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
@@ -37,6 +38,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ role }: AdminDashboardProps) {
+  const navigate = useNavigate();
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalPatients: 0,
     consultationsDay: 0,
@@ -48,9 +50,10 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
   });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [histories, setHistories] = useState<ClinicalHistory[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [selectedHistory, setSelectedHistory] = useState<Partial<ClinicalHistory>>({});
+  const [selectedHistory, setSelectedHistory] = useState<any>({});
 
   useEffect(() => {
     fetchData();
@@ -61,8 +64,9 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
     try {
       const now = new Date();
       
-      // Fetch Patients Count
-      const { count: patientCount } = await supabase.from('patients').select('*', { count: 'exact', head: true });
+      // Fetch Patients
+      const { data: patientsData, count: patientCount } = await supabase.from('patients').select('*', { count: 'exact' });
+      if (patientsData) setPatients(patientsData);
       
       // Fetch Appointments for Metrics
       const { data: appts } = await supabase.from('appointments').select('*, patient:patients(*)').order('appointment_date', { ascending: true });
@@ -119,8 +123,8 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
     
     // Header
     doc.setFontSize(22);
-    doc.setTextColor(79, 70, 229); // Indigo-600
-    doc.text('OrthoDash - Reporte Clínico', 20, 20);
+    doc.setTextColor(150, 0, 1); // #960001
+    doc.text('Ortopedia AI - Reporte Clínico', 20, 20);
     
     doc.setFontSize(12);
     doc.setTextColor(100);
@@ -153,21 +157,18 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
       head: [['Campo', 'Descripción']],
       body: data,
       theme: 'striped',
-      headStyles: { fillColor: [79, 70, 229] }
+      headStyles: { fillColor: [150, 0, 1] }
     });
 
     doc.save(`Historial_${history.patient?.full_name}_${format(new Date(), 'yyyyMMdd')}.pdf`);
   };
 
-  const handleSaveHistory = async () => {
+  const handleSaveHistory = async (formData: any) => {
     try {
       const payload = {
-        patient_id: selectedHistory.patient_id,
+        patient_id: formData.patient_id,
         extracted_data: {
-          diagnosis: selectedHistory.diagnosis,
-          treatment: selectedHistory.treatment,
-          medications: selectedHistory.medications,
-          next_appointment: selectedHistory.next_appointment
+          ...formData
         }
       };
 
@@ -209,7 +210,7 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
               setSelectedHistory({});
               setShowHistoryModal(true);
             }}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-200"
+            className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-primary/20"
           >
             <Plus size={20} />
             <span>Nueva Nota Clínica</span>
@@ -223,28 +224,28 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
           title="Pacientes Totales" 
           value={metrics.totalPatients} 
           icon={Users} 
-          color="blue" 
+          color="primary" 
           trend="+5% vs mes pasado"
         />
         <MetricCard 
           title="Consultas (Mes)" 
           value={metrics.consultationsMonth} 
           icon={Calendar} 
-          color="indigo" 
+          color="primary" 
           trend="+12% vs mes pasado"
         />
         <MetricCard 
           title="Ingresos (Semana)" 
           value={`$${metrics.incomeWeek.toLocaleString()}`} 
           icon={DollarSign} 
-          color="emerald" 
+          color="primary" 
           trend="+8% vs semana pasada"
         />
         <MetricCard 
           title="Ingresos (Mes)" 
           value={`$${metrics.incomeMonth.toLocaleString()}`} 
           icon={TrendingUp} 
-          color="amber" 
+          color="primary" 
           trend="+15% vs mes pasado"
         />
       </div>
@@ -258,8 +259,8 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#960001" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#960001" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -268,7 +269,7 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
                 <Tooltip 
                   contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
                 />
-                <Area type="monotone" dataKey="ingresos" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorIngresos)" />
+                <Area type="monotone" dataKey="ingresos" stroke="#960001" strokeWidth={3} fillOpacity={1} fill="url(#colorIngresos)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -285,7 +286,7 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
                 <Tooltip 
                   contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
                 />
-                <Bar dataKey="pacientes" fill="#818cf8" radius={[6, 6, 0, 0]} barSize={30} />
+                <Bar dataKey="pacientes" fill="#960001" radius={[6, 6, 0, 0]} barSize={30} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -298,14 +299,12 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
         <div className="xl:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
             <h3 className="text-lg font-bold text-slate-800">Historiales Clínicos Recientes</h3>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="Buscar paciente..." 
-                className="pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-64"
-              />
-            </div>
+            <button 
+              onClick={() => navigate('/history')}
+              className="text-sm font-bold text-primary hover:underline"
+            >
+              Ver todos
+            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -318,11 +317,11 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {histories.map((h) => (
+                {histories.slice(0, 5).map((h) => (
                   <tr key={h.id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xs">
+                        <div className="w-8 h-8 bg-primary-light text-primary rounded-full flex items-center justify-center font-bold text-xs">
                           {h.patient?.full_name.charAt(0)}
                         </div>
                         <div>
@@ -341,7 +340,7 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => exportToPDF(h)}
-                          className="p-2 hover:bg-white hover:text-indigo-600 rounded-lg text-slate-400 transition-all"
+                          className="p-2 hover:bg-white hover:text-primary rounded-lg text-slate-400 transition-all"
                           title="Exportar PDF"
                         >
                           <Download size={18} />
@@ -351,7 +350,7 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
                             setSelectedHistory(h);
                             setShowHistoryModal(true);
                           }}
-                          className="p-2 hover:bg-white hover:text-indigo-600 rounded-lg text-slate-400 transition-all"
+                          className="p-2 hover:bg-white hover:text-primary rounded-lg text-slate-400 transition-all"
                         >
                           <Edit2 size={18} />
                         </button>
@@ -371,19 +370,26 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
           </div>
           <div className="p-6 space-y-4">
             {appointments.filter(a => a.status === 'scheduled').slice(0, 5).map((a) => (
-              <div key={a.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl hover:bg-indigo-50 transition-colors cursor-pointer group">
+              <div 
+                key={a.id} 
+                onClick={() => navigate('/admin/agenda')}
+                className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl hover:bg-primary-light transition-colors cursor-pointer group"
+              >
                 <div className="text-center min-w-[50px]">
-                  <p className="text-xs font-bold text-indigo-600 uppercase">{format(new Date(a.appointment_date), 'EEE')}</p>
+                  <p className="text-xs font-bold text-primary uppercase">{format(new Date(a.appointment_date), 'EEE')}</p>
                   <p className="text-lg font-bold text-slate-800">{format(new Date(a.appointment_date), 'HH:mm')}</p>
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-slate-800">{a.patient?.full_name}</p>
                   <p className="text-xs text-slate-500 line-clamp-1">{a.notes || 'Consulta General'}</p>
                 </div>
-                <ChevronRight className="text-slate-300 group-hover:text-indigo-400 transition-colors" size={20} />
+                <ChevronRight className="text-slate-300 group-hover:text-primary transition-colors" size={20} />
               </div>
             ))}
-            <button className="w-full py-3 text-sm font-bold text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors">
+            <button 
+              onClick={() => navigate('/admin/agenda')}
+              className="w-full py-3 text-sm font-bold text-primary hover:bg-primary-light rounded-xl transition-colors"
+            >
               Ver Agenda Completa
             </button>
           </div>
@@ -393,95 +399,13 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
       {/* History Modal */}
       {showHistoryModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-indigo-600 text-white">
-              <h3 className="text-xl font-bold">Nueva Nota Clínica</h3>
-              <div className="flex items-center gap-4">
-                <SmartDictation 
-                  context="clinical history"
-                  onDataExtracted={(data) => {
-                    setSelectedHistory(prev => ({ ...prev, ...data }));
-                  }} 
-                />
-                <button onClick={() => setShowHistoryModal(false)} className="p-2 hover:bg-white/10 rounded-full">
-                  <X size={24} />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-8 overflow-y-auto space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Paciente</label>
-                  <select 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={selectedHistory.patient_id || ''}
-                    onChange={(e) => setSelectedHistory({...selectedHistory, patient_id: e.target.value})}
-                  >
-                    <option value="">Seleccionar Paciente</option>
-                    {/* Map patients here */}
-                    <option value="demo">Juan Pérez</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Próxima Cita</label>
-                  <input 
-                    type="date" 
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={selectedHistory.next_appointment || ''}
-                    onChange={(e) => setSelectedHistory({...selectedHistory, next_appointment: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Diagnóstico</label>
-                <textarea 
-                  rows={3}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Escribe o dicta el diagnóstico..."
-                  value={selectedHistory.diagnosis || ''}
-                  onChange={(e) => setSelectedHistory({...selectedHistory, diagnosis: e.target.value})}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Tratamiento</label>
-                <textarea 
-                  rows={3}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Escribe o dicta el tratamiento..."
-                  value={selectedHistory.treatment || ''}
-                  onChange={(e) => setSelectedHistory({...selectedHistory, treatment: e.target.value})}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Medicamentos</label>
-                <textarea 
-                  rows={2}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Escribe o dicta los medicamentos..."
-                  value={selectedHistory.medications || ''}
-                  onChange={(e) => setSelectedHistory({...selectedHistory, medications: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-              <button 
-                onClick={() => setShowHistoryModal(false)}
-                className="px-6 py-2.5 text-slate-600 font-medium hover:bg-slate-200 rounded-xl transition-colors"
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={handleSaveHistory}
-                className="px-8 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
-              >
-                Guardar Historial
-              </button>
-            </div>
+          <div className="w-full max-w-5xl h-[90vh]">
+            <ClinicalHistoryForm 
+              initialData={selectedHistory.extracted_data}
+              patients={patients}
+              onSave={handleSaveHistory}
+              onCancel={() => setShowHistoryModal(false)}
+            />
           </div>
         </div>
       )}
@@ -491,8 +415,7 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
 
 function MetricCard({ title, value, icon: Icon, color, trend }: any) {
   const colors: any = {
-    blue: 'bg-blue-50 text-blue-600',
-    indigo: 'bg-indigo-50 text-indigo-600',
+    primary: 'bg-primary-light text-primary',
     emerald: 'bg-emerald-50 text-emerald-600',
     amber: 'bg-amber-50 text-amber-600',
   };
@@ -500,7 +423,7 @@ function MetricCard({ title, value, icon: Icon, color, trend }: any) {
   return (
     <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-all group">
       <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-2xl ${colors[color]} group-hover:scale-110 transition-transform`}>
+        <div className={`p-3 rounded-2xl ${colors[color] || colors.primary} group-hover:scale-110 transition-transform`}>
           <Icon size={24} />
         </div>
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Estadística</span>
