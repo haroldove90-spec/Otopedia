@@ -1,107 +1,125 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Mic, Square, Loader2 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 
 interface VoiceInputProps {
   onResult: (text: string) => void;
   label: string;
+  value: string;
 }
 
-export default function VoiceInput({ onResult, label }: VoiceInputProps) {
+// Extend Window interface for Web Speech API
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
+export default function VoiceInput({ onResult, label, value }: VoiceInputProps) {
   const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const [interimText, setInterimText] = useState('');
+  const recognitionRef = useRef<any>(null);
+  const initialValueRef = useRef('');
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
-      
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'es-MX';
 
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
+      recognition.onresult = (event: any) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        const currentSessionText = (finalTranscript + interimTranscript).trim();
+        setInterimText(interimTranscript);
+
+        if (currentSessionText) {
+          const separator = initialValueRef.current ? ' ' : '';
+          onResult(initialValueRef.current + separator + currentSessionText);
+        }
       };
 
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(chunksRef.current, { type: mimeType });
-        await processAudio(audioBlob, mimeType);
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsRecording(false);
+        setInterimText('');
       };
 
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error("Error accessing microphone:", err);
-      alert("No se pudo acceder al micrófono. Por favor, verifica los permisos.");
+      recognition.onend = () => {
+        setIsRecording(false);
+        setInterimText('');
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [onResult]);
+
+  const startRecording = () => {
+    if (recognitionRef.current) {
+      try {
+        initialValueRef.current = value || '';
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } catch (err) {
+        console.error("Error starting recognition:", err);
+      }
+    } else {
+      alert("Tu navegador no soporta el dictado por voz en tiempo real. Usa Chrome o Edge.");
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
       setIsRecording(false);
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-    }
-  };
-
-  const processAudio = async (blob: Blob, mimeType: string) => {
-    setIsProcessing(true);
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = async () => {
-        const base64Audio = (reader.result as string).split(',')[1];
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-        
-        const prompt = `Transcribe este dictado médico para el campo "${label}". 
-        Limpia el texto, corrige la gramática y asegúrate de que sea profesional. 
-        Solo devuelve el texto transcrito, nada más.`;
-
-        const response = await ai.models.generateContent({
-          model: "gemini-3-flash-preview",
-          contents: [
-            {
-              parts: [
-                { text: prompt },
-                { inlineData: { mimeType: mimeType, data: base64Audio } }
-              ]
-            }
-          ]
-        });
-
-        if (response.text) {
-          onResult(response.text.trim());
-        }
-      };
-    } catch (error) {
-      console.error("Error processing audio:", error);
-    } finally {
-      setIsProcessing(false);
+      setInterimText('');
     }
   };
 
   return (
-    <button
-      type="button"
-      onClick={isRecording ? stopRecording : startRecording}
-      disabled={isProcessing}
-      className={`p-1.5 rounded-lg transition-all flex items-center justify-center ${
-        isRecording 
-          ? 'bg-red-100 text-red-600 animate-pulse' 
-          : 'text-slate-400 hover:text-primary hover:bg-slate-100'
-      } disabled:opacity-50`}
-      title={isRecording ? "Detener grabación" : `Dictar para ${label}`}
-    >
-      {isProcessing ? (
-        <Loader2 className="animate-spin" size={16} />
-      ) : isRecording ? (
-        <Square size={16} fill="currentColor" />
-      ) : (
-        <Mic size={16} />
+    <div className="relative flex items-center">
+      {isRecording && (
+        <div className="absolute right-full mr-3 whitespace-nowrap bg-primary text-white text-xs py-1 px-2 rounded-lg shadow-lg animate-in fade-in slide-in-from-right-2">
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-white rounded-full animate-ping" />
+            Habla ahora... {interimText && <span className="opacity-70 italic">"{interimText}"</span>}
+          </span>
+        </div>
       )}
-    </button>
+      <button
+        type="button"
+        onClick={isRecording ? stopRecording : startRecording}
+        className={`p-1.5 rounded-lg transition-all flex items-center justify-center ${
+          isRecording 
+            ? 'bg-red-100 text-red-600 ring-2 ring-red-500 ring-offset-1' 
+            : 'text-slate-400 hover:text-primary hover:bg-slate-100'
+        }`}
+        title={isRecording ? "Detener dictado" : `Dictar para ${label}`}
+      >
+        {isRecording ? (
+          <Square size={16} fill="currentColor" />
+        ) : (
+          <Mic size={16} />
+        )}
+      </button>
+    </div>
   );
 }

@@ -193,7 +193,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Ocupación</label>
-                    <VoiceInput label="Ocupación" onResult={(text) => updateField('identification', 'occupation', text)} />
+                    <VoiceInput 
+                      label="Ocupación" 
+                      value={formData.identification.occupation}
+                      onResult={(text) => updateField('identification', 'occupation', text)} 
+                    />
                   </div>
                   <input 
                     type="text"
@@ -218,7 +222,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Deporte / Actividad Física</label>
-                    <VoiceInput label="Deporte" onResult={(text) => updateField('identification', 'sport', text)} />
+                    <VoiceInput 
+                      label="Deporte" 
+                      value={formData.identification.sport}
+                      onResult={(text) => updateField('identification', 'sport', text)} 
+                    />
                   </div>
                   <input 
                     type="text"
@@ -239,7 +247,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Localización del Dolor</label>
-                    <VoiceInput label="Localización del Dolor" onResult={(text) => updateField('consultation', 'pain_location', text)} />
+                    <VoiceInput 
+                      label="Localización del Dolor" 
+                      value={formData.consultation.pain_location}
+                      onResult={(text) => updateField('consultation', 'pain_location', text)} 
+                    />
                   </div>
                   <input 
                     type="text"
@@ -252,7 +264,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Mecanismo de Lesión</label>
-                    <VoiceInput label="Mecanismo de Lesión" onResult={(text) => updateField('consultation', 'mechanism', text)} />
+                    <VoiceInput 
+                      label="Mecanismo de Lesión" 
+                      value={formData.consultation.mechanism}
+                      onResult={(text) => updateField('consultation', 'mechanism', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
@@ -292,7 +308,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Tiempo de Evolución</label>
-                    <VoiceInput label="Evolución" onResult={(text) => updateField('consultation', 'evolution', text)} />
+                    <VoiceInput 
+                      label="Evolución" 
+                      value={formData.consultation.evolution}
+                      onResult={(text) => updateField('consultation', 'evolution', text)} 
+                    />
                   </div>
                   <input 
                     type="text"
@@ -313,7 +333,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Antecedentes Traumáticos</label>
-                    <VoiceInput label="Traumáticos" onResult={(text) => updateField('background', 'traumatic', text)} />
+                    <VoiceInput 
+                      label="Traumáticos" 
+                      value={formData.background.traumatic}
+                      onResult={(text) => updateField('background', 'traumatic', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
@@ -326,7 +350,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Antecedentes Quirúrgicos</label>
-                    <VoiceInput label="Quirúrgicos" onResult={(text) => updateField('background', 'surgical', text)} />
+                    <VoiceInput 
+                      label="Quirúrgicos" 
+                      value={formData.background.surgical}
+                      onResult={(text) => updateField('background', 'surgical', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
@@ -339,7 +367,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Enfermedades Sistémicas</label>
-                    <VoiceInput label="Sistémicas" onResult={(text) => updateField('background', 'systemic', text)} />
+                    <VoiceInput 
+                      label="Sistémicas" 
+                      value={formData.background.systemic}
+                      onResult={(text) => updateField('background', 'systemic', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
@@ -360,7 +392,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Inspección</label>
-                    <VoiceInput label="Inspección" onResult={(text) => updateField('physical_exam', 'inspection', text)} />
+                    <VoiceInput 
+                      label="Inspección" 
+                      value={formData.physical_exam.inspection}
+                      onResult={(text) => updateField('physical_exam', 'inspection', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
@@ -373,7 +409,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Palpación</label>
-                    <VoiceInput label="Palpación" onResult={(text) => updateField('physical_exam', 'palpation', text)} />
+                    <VoiceInput 
+                      label="Palpación" 
+                      value={formData.physical_exam.palpation}
+                      onResult={(text) => updateField('physical_exam', 'palpation', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
@@ -386,7 +426,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Arcos de Movilidad</label>
-                    <VoiceInput label="Movilidad" onResult={(text) => updateField('physical_exam', 'mobility', text)} />
+                    <VoiceInput 
+                      label="Movilidad" 
+                      value={formData.physical_exam.mobility}
+                      onResult={(text) => updateField('physical_exam', 'mobility', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
@@ -399,7 +443,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Maniobras Especiales</label>
-                    <VoiceInput label="Maniobras" onResult={(text) => updateField('physical_exam', 'special_maneuvers', text)} />
+                    <VoiceInput 
+                      label="Maniobras" 
+                      value={formData.physical_exam.special_maneuvers}
+                      onResult={(text) => updateField('physical_exam', 'special_maneuvers', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
@@ -412,7 +460,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Examen Neurovascular</label>
-                    <VoiceInput label="Neurovascular" onResult={(text) => updateField('physical_exam', 'neurovascular', text)} />
+                    <VoiceInput 
+                      label="Neurovascular" 
+                      value={formData.physical_exam.neurovascular}
+                      onResult={(text) => updateField('physical_exam', 'neurovascular', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
@@ -433,7 +485,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Interpretación de Imagen</label>
-                    <VoiceInput label="Imagen" onResult={(text) => updateField('diagnostics', 'imaging', text)} />
+                    <VoiceInput 
+                      label="Imagen" 
+                      value={formData.diagnostics.imaging}
+                      onResult={(text) => updateField('diagnostics', 'imaging', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={3}
@@ -446,7 +502,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Laboratorio</label>
-                    <VoiceInput label="Laboratorio" onResult={(text) => updateField('diagnostics', 'laboratory', text)} />
+                    <VoiceInput 
+                      label="Laboratorio" 
+                      value={formData.diagnostics.laboratory}
+                      onResult={(text) => updateField('diagnostics', 'laboratory', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
@@ -467,7 +527,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Impresión Diagnóstica</label>
-                    <VoiceInput label="Diagnóstico" onResult={(text) => updateField('plan', 'diagnosis', text)} />
+                    <VoiceInput 
+                      label="Diagnóstico" 
+                      value={formData.plan.diagnosis}
+                      onResult={(text) => updateField('plan', 'diagnosis', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
@@ -480,7 +544,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Plan de Tratamiento</label>
-                    <VoiceInput label="Tratamiento" onResult={(text) => updateField('plan', 'treatment_plan', text)} />
+                    <VoiceInput 
+                      label="Tratamiento" 
+                      value={formData.plan.treatment_plan}
+                      onResult={(text) => updateField('plan', 'treatment_plan', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={3}
@@ -493,7 +561,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700">Pronóstico</label>
-                    <VoiceInput label="Pronóstico" onResult={(text) => updateField('plan', 'prognosis', text)} />
+                    <VoiceInput 
+                      label="Pronóstico" 
+                      value={formData.plan.prognosis}
+                      onResult={(text) => updateField('plan', 'prognosis', text)} 
+                    />
                   </div>
                   <textarea 
                     rows={2}
