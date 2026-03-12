@@ -106,25 +106,25 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Tabs */}
-        <div className="w-64 bg-slate-50 border-r border-slate-100 p-4 flex flex-col gap-2">
+      <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
+        {/* Sidebar Tabs - Horizontal on mobile, Vertical on desktop */}
+        <div className="lg:w-64 bg-slate-50 border-b lg:border-b-0 lg:border-r border-slate-100 p-2 lg:p-4 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible no-scrollbar">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-3 p-3 rounded-xl text-sm font-medium transition-all ${
+              className={`flex items-center gap-3 p-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap lg:whitespace-normal ${
                 activeTab === tab.id 
                   ? 'bg-primary text-white shadow-lg shadow-primary/20' 
                   : 'text-slate-600 hover:bg-slate-200'
               }`}
             >
-              <tab.icon size={18} />
+              <tab.icon size={18} className="shrink-0" />
               <span>{tab.label}</span>
             </button>
           ))}
           
-          <div className="mt-auto pt-4 border-t border-slate-200">
+          <div className="hidden lg:block mt-auto pt-4 border-t border-slate-200">
             <button 
               onClick={() => onSave(formData)}
               className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-200"
@@ -136,8 +136,9 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
         </div>
 
         {/* Form Content */}
-        <div className="flex-1 overflow-y-auto p-8 bg-white">
-          {activeTab === 'identification' && (
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-white">
+          <div className="max-w-4xl mx-auto">
+            {activeTab === 'identification' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <h4 className="text-lg font-bold text-slate-800 border-b pb-2">1. Ficha de Identificación</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -416,6 +417,18 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
               </div>
             </div>
           )}
+
+          {/* Mobile Save Button */}
+          <div className="lg:hidden mt-8 pt-6 border-t border-slate-100">
+            <button 
+              onClick={() => onSave(formData)}
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white p-4 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-200"
+            >
+              <Save size={20} />
+              <span>Guardar Registro</span>
+            </button>
+          </div>
+          </div>
         </div>
       </div>
     </div>

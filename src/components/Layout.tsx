@@ -165,7 +165,7 @@ export default function Layout({ children, role, onRoleChange }: LayoutProps) {
 
         <div className="p-4 border-t border-white/10">
           <button 
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/')}
             className="w-full flex items-center gap-3 p-3 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all"
           >
             <LogOut size={20} />

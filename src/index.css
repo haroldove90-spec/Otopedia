@@ -8,6 +8,16 @@
   --color-primary-light: #fdf2f2;
 }
 
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
 body {
   font-family: var(--font-sans);
   background-color: #f8fafc;

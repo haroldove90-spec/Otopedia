@@ -60,17 +60,10 @@ export default function App() {
     <Router>
       <InstallPWA />
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Navigate to="/" replace />} />
         
         {/* Doctor Routes */}
-        <Route 
-          path="/" 
-          element={
-            <Layout role={role} onRoleChange={setRole}>
-              <AdminDashboard role={role} />
-            </Layout>
-          } 
-        />
         <Route 
           path="/admin" 
           element={
