@@ -1,48 +1,345 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { 
+  Plus, 
+  Search, 
+  Calendar as CalendarIcon, 
+  Clock, 
+  User, 
+  Phone, 
+  Mail,
+  MoreVertical,
+  CheckCircle2,
+  XCircle,
+  AlertCircle
+} from 'lucide-react';
+import { format, addDays, startOfToday } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { supabase } from '../lib/supabase';
-import { LogOut, Calendar, Users } from 'lucide-react';
+import { Appointment, Patient, UserRole } from '../types';
+import SmartDictation from '../components/SmartDictation';
+import confetti from 'canvas-confetti';
 
-export default function AgendaDashboard() {
-  const navigate = useNavigate();
+interface AgendaDashboardProps {
+  role: UserRole;
+}
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+export default function AgendaDashboard({ role }: AgendaDashboardProps) {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [newAppt, setNewAppt] = useState<Partial<Appointment>>({
+    appointment_date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+    status: 'scheduled',
+    price: 500
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const { data: appts } = await supabase
+        .from('appointments')
+        .select('*, patient:patients(*)')
+        .order('appointment_date', { ascending: true });
+      
+      const { data: pats } = await supabase.from('patients').select('*');
+      
+      if (appts) setAppointments(appts);
+      if (pats) setPatients(pats);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleCreateAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { data, error } = await supabase.from('appointments').insert([newAppt]).select();
+      if (error) throw error;
+      
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#4f46e5', '#818cf8', '#c7d2fe']
+      });
+
+      setShowModal(false);
+      fetchData();
+      
+      // In a real app, this would trigger a Supabase Realtime event
+      // that the Doctor's dashboard is listening to.
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+    }
+  };
+
+  const updateStatus = async (id: string, status: string) => {
+    try {
+      await supabase.from('appointments').update({ status }).eq('id', id);
+      fetchData();
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
+  if (loading) return <div className="flex items-center justify-center h-full">Cargando agenda...</div>;
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white shadow-sm border-b border-slate-200 px-8 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-800">Panel de Asistente</h1>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-800">Agenda Médica</h1>
+          <p className="text-slate-500">Gestión de citas y pacientes</p>
+        </div>
         <button 
-          onClick={handleLogout}
-          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl transition-all shadow-lg shadow-indigo-200 font-bold"
         >
-          <LogOut size={20} />
-          <span>Salir</span>
+          <Plus size={20} />
+          <span>Nueva Cita</span>
         </button>
-      </header>
+      </div>
 
-      <main className="max-w-6xl mx-auto p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center text-center hover:shadow-md transition-shadow cursor-pointer">
-            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
-              <Calendar size={32} />
-            </div>
-            <h2 className="text-xl font-bold text-slate-800">Agenda del Día</h2>
-            <p className="text-slate-500 mt-2">Gestionar citas, confirmaciones y estatus de llegada.</p>
+      {/* Stats Quick View */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+            <CalendarIcon size={24} />
           </div>
-
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center text-center hover:shadow-md transition-shadow cursor-pointer">
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
-              <Users size={32} />
-            </div>
-            <h2 className="text-xl font-bold text-slate-800">Directorio de Pacientes</h2>
-            <p className="text-slate-500 mt-2">Dar de alta nuevos pacientes y actualizar datos demográficos.</p>
+          <div>
+            <p className="text-xs font-bold text-slate-400 uppercase">Citas Hoy</p>
+            <p className="text-xl font-bold text-slate-800">{appointments.filter(a => format(new Date(a.appointment_date), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')).length}</p>
           </div>
         </div>
-      </main>
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
+            <CheckCircle2 size={24} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-400 uppercase">Completadas</p>
+            <p className="text-xl font-bold text-slate-800">{appointments.filter(a => a.status === 'completed').length}</p>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
+            <AlertCircle size={24} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-400 uppercase">Pendientes</p>
+            <p className="text-xl font-bold text-slate-800">{appointments.filter(a => a.status === 'scheduled').length}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Agenda List */}
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-800">Citas Programadas</h3>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Buscar cita..." 
+                className="pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-64"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                <th className="px-6 py-4 font-medium">Paciente</th>
+                <th className="px-6 py-4 font-medium">Fecha y Hora</th>
+                <th className="px-6 py-4 font-medium">Estado</th>
+                <th className="px-6 py-4 font-medium">Precio</th>
+                <th className="px-6 py-4 font-medium text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {appointments.map((a) => (
+                <tr key={a.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
+                        {a.patient?.full_name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">{a.patient?.full_name}</p>
+                        <p className="text-xs text-slate-500">{a.patient?.phone}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-slate-700">
+                        {format(new Date(a.appointment_date), 'dd MMM yyyy', { locale: es })}
+                      </span>
+                      <span className="text-xs text-slate-500 flex items-center gap-1">
+                        <Clock size={12} /> {format(new Date(a.appointment_date), 'HH:mm')}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      a.status === 'scheduled' ? 'bg-blue-100 text-blue-600' :
+                      a.status === 'completed' ? 'bg-emerald-100 text-emerald-600' :
+                      'bg-slate-100 text-slate-600'
+                    }`}>
+                      {a.status === 'scheduled' ? 'Programada' : a.status === 'completed' ? 'Completada' : a.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-bold text-slate-700">${a.price || 0}</span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => updateStatus(a.id, 'completed')}
+                        className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-colors"
+                        title="Marcar como completada"
+                      >
+                        <CheckCircle2 size={18} />
+                      </button>
+                      <button 
+                        onClick={() => updateStatus(a.id, 'cancelled')}
+                        className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
+                        title="Cancelar cita"
+                      >
+                        <XCircle size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* New Appointment Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-100 bg-indigo-600 text-white flex items-center justify-between">
+              <h3 className="text-xl font-bold">Nueva Cita</h3>
+              <div className="flex items-center gap-4">
+                <SmartDictation 
+                  context="appointment scheduling"
+                  onDataExtracted={(data) => {
+                    setNewAppt(prev => ({ ...prev, ...data }));
+                  }} 
+                />
+                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-white/10 rounded-full">
+                  <XIcon size={24} />
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleCreateAppointment} className="p-8 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Paciente</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <select 
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={newAppt.patient_id || ''}
+                    onChange={(e) => setNewAppt({...newAppt, patient_id: e.target.value})}
+                    required
+                  >
+                    <option value="">Seleccionar Paciente</option>
+                    {patients.map(p => (
+                      <option key={p.id} value={p.id}>{p.full_name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Fecha y Hora</label>
+                  <input 
+                    type="datetime-local" 
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={newAppt.appointment_date || ''}
+                    onChange={(e) => setNewAppt({...newAppt, appointment_date: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Precio Consulta</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                    <input 
+                      type="number" 
+                      className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500"
+                      value={newAppt.price || ''}
+                      onChange={(e) => setNewAppt({...newAppt, price: Number(e.target.value)})}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Notas / Motivo</label>
+                <textarea 
+                  rows={3}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Ej: Dolor en rodilla izquierda..."
+                  value={newAppt.notes || ''}
+                  onChange={(e) => setNewAppt({...newAppt, notes: e.target.value})}
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+                >
+                  Agendar Cita
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function XIcon({ size, className }: any) {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+    </svg>
   );
 }
