@@ -42,10 +42,14 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
           }
         }
 
-        const currentSessionText = (finalTranscript + interimTranscript).trim();
-        setInterimText(interimTranscript);
-
+        let currentSessionText = (finalTranscript + interimTranscript).trim();
+        
         if (currentSessionText) {
+          // Capitalize the first letter of the new dictation
+          currentSessionText = currentSessionText.charAt(0).toUpperCase() + currentSessionText.slice(1);
+          
+          setInterimText(interimTranscript);
+
           const separator = initialValueRef.current ? ' ' : '';
           onResult(initialValueRef.current + separator + currentSessionText);
         }
