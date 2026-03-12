@@ -44,9 +44,17 @@ export default function Login() {
           password,
         });
 
-        // Si el usuario no existe y es la credencial solicitada, intentar registrarlo automáticamente
-        if (authError && authError.message.includes('Invalid login credentials') && email === 'ortopedia') {
-          console.log('Intentando auto-registro para cuenta demo...');
+        // Si el usuario no existe y es una de las credenciales solicitadas, intentar registrarlo automáticamente
+        const demoUsers = {
+          'ortopedista': 'doctor',
+          'asistente': 'assistant',
+          'ortopedia': 'doctor' // mantener compatibilidad anterior
+        };
+
+        const demoRole = demoUsers[email.toLowerCase() as keyof typeof demoUsers];
+
+        if (authError && authError.message.includes('Invalid login credentials') && demoRole) {
+          console.log(`Intentando auto-registro para cuenta demo: ${email}...`);
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: loginEmail,
             password,
@@ -55,16 +63,21 @@ export default function Login() {
           if (!signUpError && signUpData.user) {
             await supabase.from('profiles').upsert({ 
               id: signUpData.user.id, 
-              role: 'doctor', 
-              full_name: 'Especialista Ortopedia' 
+              role: demoRole, 
+              full_name: email === 'ortopedista' ? 'Dr. Ortopedista' : 
+                         email === 'asistente' ? 'Asistente Clínica' : 'Especialista Ortopedia'
             });
             // Re-intentar login
-            const { error: retryError } = await supabase.auth.signInWithPassword({
+            const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
               email: loginEmail,
               password,
             });
-            if (!retryError) {
-              navigate('/admin');
+            if (!retryError && retryData.user) {
+              if (demoRole === 'doctor') {
+                navigate('/admin');
+              } else {
+                navigate('/agenda');
+              }
               return;
             }
           }
@@ -79,10 +92,13 @@ export default function Login() {
           .eq('id', authData.user.id)
           .single();
 
-        if (profile?.role === 'doctor' || !profile) {
+        if (profile?.role === 'doctor') {
           navigate('/admin');
-        } else {
+        } else if (profile?.role === 'assistant') {
           navigate('/agenda');
+        } else {
+          // Fallback por si no hay perfil
+          navigate('/admin');
         }
       }
     } catch (error: any) {
@@ -124,7 +140,7 @@ export default function Login() {
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Ej: ortopedia"
+              placeholder="Ej: ortopedista"
               className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
               required
             />
@@ -164,8 +180,9 @@ export default function Login() {
 
         <div className="mt-8 pt-6 border-t border-slate-100">
           <p className="text-xs text-slate-400 text-center">
-            Usa las credenciales demo para probar:<br/>
-            <b>ortopedia / 123prueba</b>
+            Credenciales de acceso:<br/>
+            <b>ortopedista / 123prueba</b><br/>
+            <b>asistente / 123prueba</b>
           </p>
         </div>
       </div>
