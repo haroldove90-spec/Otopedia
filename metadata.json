@@ -1,0 +1,5 @@
+{
+  "name": "OrthoDash",
+  "description": "Dashboard médico para Especialista en Ortopedia con dictado inteligente",
+  "requestFramePermissions": ["microphone"]
+}
