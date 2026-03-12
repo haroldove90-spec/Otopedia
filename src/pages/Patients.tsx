@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Plus, 
@@ -18,6 +19,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function Patients() {
+  const navigate = useNavigate();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -118,7 +120,10 @@ export default function Patients() {
               </div>
 
               <div className="mt-6 pt-6 border-t border-slate-200 flex items-center gap-2">
-                <button className="flex-1 py-2 bg-white text-primary text-xs font-bold rounded-xl border border-primary/10 hover:bg-primary-light transition-colors flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => navigate('/history', { state: { openNew: true, patientId: p.id } })}
+                  className="flex-1 py-2 bg-white text-primary text-xs font-bold rounded-xl border border-primary/10 hover:bg-primary-light transition-colors flex items-center justify-center gap-2"
+                >
                   <FileText size={14} /> Historial
                 </button>
                 <button className="flex-1 py-2 bg-white text-slate-600 text-xs font-bold rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">

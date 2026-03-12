@@ -67,17 +67,27 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
         
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
         
-        const prompt = `Analiza este dictado médico ortopédico (${context}) y extrae la información estructurada en formato JSON. 
-        Si es una cita: extrae fecha, hora, motivo. 
-        Si es un historial clínico completo, intenta mapear los campos a esta estructura:
-        - identification: { occupation, laterality, sport }
-        - consultation: { pain_location, mechanism, pain_type, eva (número 1-10), evolution }
-        - background: { traumatic, surgical, systemic }
-        - physical_exam: { inspection, palpation, mobility, special_maneuvers, neurovascular }
-        - diagnostics: { imaging, laboratory }
-        - plan: { diagnosis, treatment_plan, prognosis }
+        const prompt = `Actúa como un asistente médico experto en ortopedia. Tu tarea es procesar el audio de un dictado médico y extraer la información estructurada para completar un historial clínico.
         
-        Dictado: `;
+        CONTEXTO: ${context}
+        
+        ESTRUCTURA REQUERIDA (JSON):
+        {
+          "identification": { "occupation": "string", "laterality": "diestro|zurdo|ambidiestro", "sport": "string" },
+          "consultation": { "pain_location": "string", "mechanism": "string", "pain_type": "string", "eva": number(1-10), "evolution": "string" },
+          "background": { "traumatic": "string", "surgical": "string", "systemic": "string" },
+          "physical_exam": { "inspection": "string", "palpation": "string", "mobility": "string", "special_maneuvers": "string", "neurovascular": "string" },
+          "diagnostics": { "imaging": "string", "laboratory": "string" },
+          "plan": { "diagnosis": "string", "treatment_plan": "string", "prognosis": "string" }
+        }
+
+        REGLAS:
+        1. Solo devuelve el JSON, sin texto explicativo.
+        2. Si un campo no se menciona, no lo incluyas en el JSON o déjalo vacío.
+        3. Traduce términos coloquiales a terminología médica ortopédica si es apropiado.
+        4. El campo 'eva' debe ser un número del 1 al 10.
+        
+        Analiza el dictado y genera el JSON correspondiente.`;
 
         const response = await ai.models.generateContent({
           model: "gemini-3-flash-preview",
@@ -95,8 +105,13 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
         });
 
         if (response.text) {
-          const extractedData = JSON.parse(response.text);
-          onDataExtracted(extractedData);
+          try {
+            const cleanText = response.text.replace(/```json|```/g, '').trim();
+            const extractedData = JSON.parse(cleanText);
+            onDataExtracted(extractedData);
+          } catch (parseError) {
+            console.error("Error parsing Gemini response:", parseError);
+          }
         }
       };
     } catch (error) {

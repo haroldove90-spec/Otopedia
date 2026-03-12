@@ -36,7 +36,7 @@ export default function History() {
     if (location.state) {
       const state = location.state as any;
       if (state.openNew) {
-        setSelectedHistory({});
+        setSelectedHistory({ patient_id: state.patientId || '' });
         setShowModal(true);
       } else if (state.editHistory) {
         setSelectedHistory(state.editHistory);

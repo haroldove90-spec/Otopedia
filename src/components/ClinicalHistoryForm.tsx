@@ -21,7 +21,7 @@ interface ClinicalHistoryFormProps {
 }
 
 export default function ClinicalHistoryForm({ initialData, onSave, onCancel, patients }: ClinicalHistoryFormProps) {
-  const [formData, setFormData] = useState(initialData || {
+  const defaultData = {
     patient_id: '',
     identification: {
       occupation: '',
@@ -56,7 +56,29 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
       treatment_plan: '',
       prognosis: ''
     }
-  });
+  };
+
+  // Merge initialData with defaultData
+  const getInitialState = () => {
+    if (!initialData) return defaultData;
+    
+    // If it's a full history object from DB, it might have patient_id at top level
+    // and the rest in extracted_data, but History.tsx passes extracted_data as initialData
+    // OR it passes { patient_id: '...' } for new notes.
+    
+    return {
+      ...defaultData,
+      ...initialData,
+      identification: { ...defaultData.identification, ...(initialData.identification || {}) },
+      consultation: { ...defaultData.consultation, ...(initialData.consultation || {}) },
+      background: { ...defaultData.background, ...(initialData.background || {}) },
+      physical_exam: { ...defaultData.physical_exam, ...(initialData.physical_exam || {}) },
+      diagnostics: { ...defaultData.diagnostics, ...(initialData.diagnostics || {}) },
+      plan: { ...defaultData.plan, ...(initialData.plan || {}) },
+    };
+  };
+
+  const [formData, setFormData] = useState(getInitialState());
 
   const [activeTab, setActiveTab] = useState('identification');
 
@@ -70,11 +92,23 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
   ];
 
   const handleDictation = (data: any) => {
-    // Merge extracted data into form data
-    setFormData((prev: any) => ({
-      ...prev,
-      ...data
-    }));
+    // Deep merge extracted data into form data to avoid overwriting nested objects
+    setFormData((prev: any) => {
+      const newData = { ...prev };
+      
+      Object.keys(data).forEach(section => {
+        if (typeof data[section] === 'object' && data[section] !== null && !Array.isArray(data[section])) {
+          newData[section] = {
+            ...(prev[section] || {}),
+            ...data[section]
+          };
+        } else {
+          newData[section] = data[section];
+        }
+      });
+      
+      return newData;
+    });
   };
 
   const updateField = (section: string, field: string, value: any) => {
