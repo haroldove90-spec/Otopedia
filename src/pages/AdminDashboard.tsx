@@ -163,26 +163,12 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
     doc.save(`Historial_${history.patient?.full_name}_${format(new Date(), 'yyyyMMdd')}.pdf`);
   };
 
-  const handleSaveHistory = async (formData: any) => {
-    try {
-      const payload = {
-        patient_id: formData.patient_id,
-        extracted_data: {
-          ...formData
-        }
-      };
+  const handleNewNote = () => {
+    navigate('/history', { state: { openNew: true } });
+  };
 
-      if (selectedHistory.id) {
-        await supabase.from('clinical_notes').update(payload).eq('id', selectedHistory.id);
-      } else {
-        await supabase.from('clinical_notes').insert([payload]);
-      }
-      
-      setShowHistoryModal(false);
-      fetchData();
-    } catch (error) {
-      console.error('Error saving history:', error);
-    }
+  const handleEditNote = (history: ClinicalHistory) => {
+    navigate('/history', { state: { editHistory: history } });
   };
 
   const chartData = [
@@ -206,10 +192,7 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => {
-              setSelectedHistory({});
-              setShowHistoryModal(true);
-            }}
+            onClick={handleNewNote}
             className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-primary/20"
           >
             <Plus size={20} />
@@ -346,10 +329,7 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
                           <Download size={18} />
                         </button>
                         <button 
-                          onClick={() => {
-                            setSelectedHistory(h);
-                            setShowHistoryModal(true);
-                          }}
+                          onClick={() => handleEditNote(h)}
                           className="p-2 hover:bg-white hover:text-primary rounded-lg text-slate-400 transition-all"
                         >
                           <Edit2 size={18} />
@@ -395,20 +375,6 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
           </div>
         </div>
       </div>
-
-      {/* History Modal */}
-      {showHistoryModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-5xl h-[90vh]">
-            <ClinicalHistoryForm 
-              initialData={selectedHistory.extracted_data}
-              patients={patients}
-              onSave={handleSaveHistory}
-              onCancel={() => setShowHistoryModal(false)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

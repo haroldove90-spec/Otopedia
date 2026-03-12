@@ -30,60 +30,75 @@ export default function Login() {
         if (authError) throw authError;
 
         if (authData.user) {
-          await supabase.from('profiles').upsert({ 
-            id: authData.user.id, 
-            role: 'doctor', 
-            full_name: email 
-          });
+          try {
+            await supabase.from('profiles').upsert({ 
+              id: authData.user.id, 
+              role: 'doctor', 
+              full_name: email 
+            });
+          } catch (pErr) {
+            console.warn('Error creating profile, but user was created:', pErr);
+          }
           alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
           setIsSignUp(false);
         }
       } else {
-        // Intentar Login
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        // Intentar Login con un timeout manual para evitar "atascos"
+        const authPromise = supabase.auth.signInWithPassword({
           email: loginEmail,
           password,
         });
+
+        // Timeout de 15 segundos
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('La conexión está tardando demasiado. Por favor intenta de nuevo.')), 15000)
+        );
+
+        const { data: authData, error: authError } = await Promise.race([authPromise, timeoutPromise]) as any;
 
         // Si el usuario no existe y es una de las credenciales solicitadas, intentar registrarlo automáticamente
         const demoUsers = {
           'ortopedista': 'doctor',
           'asistente': 'assistant',
-          'ortopedia': 'doctor' // mantener compatibilidad anterior
+          'ortopedia': 'doctor'
         };
 
         const demoRole = demoUsers[email.toLowerCase() as keyof typeof demoUsers];
 
         if (authError && (authError.message.includes('Invalid login credentials') || authError.status === 400) && demoRole) {
           console.log(`Intentando auto-registro para cuenta demo: ${email}...`);
+          
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: loginEmail,
             password,
           });
           
           if (!signUpError && signUpData.user) {
-            await supabase.from('profiles').upsert({ 
-              id: signUpData.user.id, 
-              role: demoRole, 
-              full_name: email === 'ortopedista' ? 'Dr. Ortopedista' : 
-                         email === 'asistente' ? 'Asistente Clínica' : 'Especialista Ortopedia'
-            });
+            try {
+              await supabase.from('profiles').upsert({ 
+                id: signUpData.user.id, 
+                role: demoRole, 
+                full_name: email === 'ortopedista' ? 'Dr. Ortopedista' : 
+                           email === 'asistente' ? 'Asistente Clínica' : 'Especialista Ortopedia'
+              });
+            } catch (pErr) {
+              console.warn('Error creating demo profile:', pErr);
+            }
+
             // Re-intentar login
             const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
               email: loginEmail,
               password,
             });
+
             if (!retryError && retryData.user) {
-              if (demoRole === 'doctor') {
-                navigate('/admin');
-              } else {
-                navigate('/agenda');
-              }
+              navigate(demoRole === 'doctor' ? '/admin' : '/agenda');
               return;
             }
           } else if (signUpError && signUpError.message.includes('User already registered')) {
-            // Si ya existe pero falló el login inicial, probablemente la contraseña es incorrecta
             throw new Error('Contraseña incorrecta para este usuario demo.');
+          } else if (signUpError) {
+            throw signUpError;
           }
         }
 
@@ -91,20 +106,25 @@ export default function Login() {
 
         if (authData.user) {
           // Obtener Rol
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', authData.user.id)
-            .single();
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', authData.user.id)
+              .single();
 
-          if (profile?.role === 'doctor') {
-            navigate('/admin');
-          } else if (profile?.role === 'assistant') {
-            navigate('/agenda');
-          } else {
-            // Fallback por si no hay perfil
+            if (profile?.role === 'doctor') {
+              navigate('/admin');
+            } else if (profile?.role === 'assistant') {
+              navigate('/agenda');
+            } else {
+              navigate('/admin');
+            }
+          } catch (pErr) {
+            console.warn('Error fetching profile role, defaulting to doctor:', pErr);
             navigate('/admin');
           }
+          return;
         }
       }
     } catch (error: any) {

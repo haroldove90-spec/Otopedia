@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Search, 
   FileText, 
@@ -19,6 +20,8 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
 export default function History() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [histories, setHistories] = useState<ClinicalHistory[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +31,21 @@ export default function History() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    
+    // Manejar estado de navegación (desde Dashboard)
+    if (location.state) {
+      const state = location.state as any;
+      if (state.openNew) {
+        setSelectedHistory({});
+        setShowModal(true);
+      } else if (state.editHistory) {
+        setSelectedHistory(state.editHistory);
+        setShowModal(true);
+      }
+      // Limpiar estado para evitar reapertura al recargar
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const fetchData = async () => {
     setLoading(true);
