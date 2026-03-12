@@ -88,14 +88,14 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-3xl overflow-hidden shadow-2xl">
+    <div className="flex flex-col bg-white min-h-screen lg:min-h-0">
       {/* Header */}
-      <div className="p-6 bg-primary text-white flex items-center justify-between">
+      <div className="p-4 lg:p-6 bg-primary text-white flex items-center justify-between sticky top-0 z-30">
         <div>
-          <h3 className="text-xl font-bold">Anamnesis Ortopédica</h3>
-          <p className="text-white/70 text-sm">Historial Clínico Detallado</p>
+          <h3 className="text-lg lg:text-xl font-bold">Anamnesis Ortopédica</h3>
+          <p className="text-white/70 text-xs lg:text-sm">Historial Clínico Detallado</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 lg:gap-4">
           <SmartDictation 
             context="full orthopedic anamnesis"
             onDataExtracted={handleDictation} 
@@ -106,9 +106,9 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
+      <div className="flex flex-1 flex-col lg:flex-row">
         {/* Sidebar Tabs - Horizontal on mobile, Vertical on desktop */}
-        <div className="lg:w-64 bg-slate-50 border-b lg:border-b-0 lg:border-r border-slate-100 p-2 lg:p-4 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible no-scrollbar">
+        <div className="lg:w-64 bg-slate-50 border-b lg:border-b-0 lg:border-r border-slate-100 p-2 lg:p-4 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible no-scrollbar sticky top-[72px] lg:top-0 z-20">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -136,7 +136,7 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
         </div>
 
         {/* Form Content */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-white">
+        <div className="flex-1 p-4 md:p-8 bg-white">
           <div className="max-w-4xl mx-auto">
             {activeTab === 'identification' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">

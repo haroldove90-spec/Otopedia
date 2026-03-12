@@ -141,6 +141,19 @@ export default function History() {
 
   if (loading) return <div className="flex items-center justify-center h-full">Cargando historiales...</div>;
 
+  if (showModal) {
+    return (
+      <div className="-m-4 md:-m-8">
+        <ClinicalHistoryForm 
+          initialData={selectedHistory.extracted_data}
+          patients={patients}
+          onSave={handleSaveHistory}
+          onCancel={() => setShowModal(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -254,19 +267,6 @@ export default function History() {
           </table>
         </div>
       </div>
-
-      {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-5xl h-[90vh]">
-            <ClinicalHistoryForm 
-              initialData={selectedHistory.extracted_data}
-              patients={patients}
-              onSave={handleSaveHistory}
-              onCancel={() => setShowModal(false)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

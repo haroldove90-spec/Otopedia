@@ -29,6 +29,13 @@ export default function AgendaDashboard({ role }: AgendaDashboardProps) {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [isNewPatient, setIsNewPatient] = useState(false);
+  const [newPatientData, setNewPatientData] = useState({
+    full_name: '',
+    phone: '',
+    email: '',
+    dob: ''
+  });
   const [newAppt, setNewAppt] = useState<Partial<Appointment>>({
     appointment_date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
     status: 'scheduled',
@@ -61,7 +68,26 @@ export default function AgendaDashboard({ role }: AgendaDashboardProps) {
   const handleCreateAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase.from('appointments').insert([newAppt]).select();
+      let patientId = newAppt.patient_id;
+
+      if (isNewPatient) {
+        const { data: patient, error: pError } = await supabase
+          .from('patients')
+          .insert([newPatientData])
+          .select()
+          .single();
+        
+        if (pError) throw pError;
+        patientId = patient.id;
+      }
+
+      if (!patientId) throw new Error('Debe seleccionar o registrar un paciente');
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .insert([{ ...newAppt, patient_id: patientId }])
+        .select();
+      
       if (error) throw error;
       
       confetti({
@@ -72,12 +98,12 @@ export default function AgendaDashboard({ role }: AgendaDashboardProps) {
       });
 
       setShowModal(false);
+      setIsNewPatient(false);
+      setNewPatientData({ full_name: '', phone: '', email: '', dob: '' });
       fetchData();
-      
-      // In a real app, this would trigger a Supabase Realtime event
-      // that the Doctor's dashboard is listening to.
     } catch (error) {
       console.error('Error creating appointment:', error);
+      alert('Error al crear la cita. Por favor verifique los datos.');
     }
   };
 
@@ -248,8 +274,54 @@ export default function AgendaDashboard({ role }: AgendaDashboardProps) {
             </div>
 
             <form onSubmit={handleCreateAppointment} className="p-8 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Paciente</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-slate-700">Paciente</label>
+                <button 
+                  type="button"
+                  onClick={() => setIsNewPatient(!isNewPatient)}
+                  className="text-xs font-bold text-primary hover:underline"
+                >
+                  {isNewPatient ? 'Seleccionar existente' : '+ Registrar nuevo'}
+                </button>
+              </div>
+
+              {isNewPatient ? (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                      type="text"
+                      placeholder="Nombre completo del paciente"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
+                      value={newPatientData.full_name}
+                      onChange={(e) => setNewPatientData({...newPatientData, full_name: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input 
+                        type="tel"
+                        placeholder="Teléfono"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
+                        value={newPatientData.phone}
+                        onChange={(e) => setNewPatientData({...newPatientData, phone: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div className="relative">
+                      <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input 
+                        type="date"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
+                        value={newPatientData.dob}
+                        onChange={(e) => setNewPatientData({...newPatientData, dob: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <select 
@@ -264,7 +336,7 @@ export default function AgendaDashboard({ role }: AgendaDashboardProps) {
                     ))}
                   </select>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
