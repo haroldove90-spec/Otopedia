@@ -59,8 +59,12 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
       recognition.onerror = (event: any) => {
         console.error("Speech recognition error:", event.error);
         if (event.error === 'no-speech') {
-          // Ignore no-speech errors to keep it alive
           return;
+        }
+        if (event.error === 'not-allowed') {
+          alert("Acceso al micrófono denegado. Por favor, permite el uso del micrófono en la configuración de tu navegador para usar el dictado.");
+        } else if (event.error === 'network') {
+          alert("Error de red. El dictado por voz requiere una conexión a internet activa.");
         }
         setIsRecording(false);
         setInterimText('');

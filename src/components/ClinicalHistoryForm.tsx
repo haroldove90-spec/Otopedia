@@ -14,6 +14,7 @@ import {
 import SmartDictation from './SmartDictation';
 import VoiceInput from './VoiceInput';
 import HumanBodyGraphic from './HumanBodyGraphic';
+import MicTestModal from './MicTestModal';
 
 interface ClinicalHistoryFormProps {
   initialData?: any;
@@ -83,8 +84,8 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
   };
 
   const [formData, setFormData] = useState(getInitialState());
-
   const [activeTab, setActiveTab] = useState('identification');
+  const [isMicModalOpen, setIsMicModalOpen] = useState(false);
 
   const tabs = [
     { id: 'identification', label: 'Identificación', icon: User },
@@ -134,6 +135,13 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
           <p className="text-white/70 text-xs lg:text-sm">Historial Clínico Detallado</p>
         </div>
         <div className="flex items-center gap-2 lg:gap-4">
+          <button
+            onClick={() => setIsMicModalOpen(true)}
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all text-xs font-medium border border-white/20"
+          >
+            <Mic size={14} />
+            Probar Micrófono
+          </button>
           <SmartDictation 
             context="full orthopedic anamnesis"
             onDataExtracted={handleDictation} 
@@ -143,6 +151,11 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
           </button>
         </div>
       </div>
+
+      <MicTestModal 
+        isOpen={isMicModalOpen} 
+        onClose={() => setIsMicModalOpen(false)} 
+      />
 
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* Sidebar Tabs - Horizontal on mobile, Vertical on desktop */}
