@@ -9,7 +9,8 @@ import {
   Mic,
   MicOff,
   Save,
-  X
+  X,
+  Volume2
 } from 'lucide-react';
 import SmartDictation from './SmartDictation';
 import VoiceInput from './VoiceInput';
@@ -135,13 +136,6 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
           <p className="text-white/70 text-xs lg:text-sm">Historial Clínico Detallado</p>
         </div>
         <div className="flex items-center gap-2 lg:gap-4">
-          <button
-            onClick={() => setIsMicModalOpen(true)}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all text-xs font-medium border border-white/20"
-          >
-            <Mic size={14} />
-            Probar Micrófono
-          </button>
           <SmartDictation 
             context="full orthopedic anamnesis"
             onDataExtracted={handleDictation} 
@@ -189,6 +183,26 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
         {/* Form Content */}
         <div className="flex-1 p-4 md:p-8 bg-white">
           <div className="max-w-4xl mx-auto">
+            {/* Mic Test Alert - Very Visible */}
+            <div className="mb-8 p-4 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center shadow-lg shadow-primary/30">
+                  <Mic size={24} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800">¿Funciona su micrófono?</h4>
+                  <p className="text-sm text-slate-500">Asegúrese de que el dictado capture su voz correctamente antes de empezar.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsMicModalOpen(true)}
+                className="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              >
+                <Volume2 size={18} />
+                Probar Micrófono Ahora
+              </button>
+            </div>
+
             {activeTab === 'identification' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <h4 className="text-lg font-bold text-slate-800 border-b pb-2">1. Ficha de Identificación</h4>
