@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import SmartDictation from './SmartDictation';
 import VoiceInput from './VoiceInput';
+import HumanBodyGraphic from './HumanBodyGraphic';
 
 interface ClinicalHistoryFormProps {
   initialData?: any;
@@ -27,14 +28,16 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
     identification: {
       occupation: '',
       laterality: 'diestro',
-      sport: ''
+      sport: '',
+      age: ''
     },
     consultation: {
       pain_location: '',
       mechanism: '',
       pain_type: '',
       eva: 5,
-      evolution: ''
+      evolution: '',
+      onset: 'insidioso'
     },
     background: {
       traumatic: '',
@@ -206,6 +209,24 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                     value={formData.identification.occupation}
                     onChange={(e) => updateField('identification', 'occupation', e.target.value)}
                   />
+                  <p className="mt-1 text-[10px] text-slate-400 italic">Vital para entender lesiones por esfuerzo repetitivo</p>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-slate-700">Edad</label>
+                    <VoiceInput 
+                      label="Edad" 
+                      value={formData.identification.age}
+                      onResult={(text) => updateField('identification', 'age', text)} 
+                    />
+                  </div>
+                  <input 
+                    type="number"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Años"
+                    value={formData.identification.age}
+                    onChange={(e) => updateField('identification', 'age', e.target.value)}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Lateralidad</label>
@@ -218,6 +239,7 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                     <option value="zurdo">Zurdo</option>
                     <option value="ambidiestro">Ambidiestro</option>
                   </select>
+                  <p className="mt-1 text-[10px] text-slate-400 italic">Crucial para evaluar funcionalidad</p>
                 </div>
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-2">
@@ -242,43 +264,54 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
 
           {activeTab === 'consultation' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <h4 className="text-lg font-bold text-slate-800 border-b pb-2">2. Motivo de Consulta</h4>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-slate-700">Localización del Dolor</label>
-                    <VoiceInput 
-                      label="Localización del Dolor" 
+              <h4 className="text-lg font-bold text-slate-800 border-b pb-2">2. Motivo de Consulta y Padecimiento</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-1">
+                  <HumanBodyGraphic 
+                    selectedPart={formData.consultation.pain_location}
+                    onPartSelect={(part) => updateField('consultation', 'pain_location', part)}
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-slate-700">Localización del Dolor</label>
+                      <VoiceInput 
+                        label="Localización del Dolor" 
+                        value={formData.consultation.pain_location}
+                        onResult={(text) => updateField('consultation', 'pain_location', text)} 
+                      />
+                    </div>
+                    <input 
+                      type="text"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Ej: Rodilla derecha, cara interna..."
                       value={formData.consultation.pain_location}
-                      onResult={(text) => updateField('consultation', 'pain_location', text)} 
+                      onChange={(e) => updateField('consultation', 'pain_location', e.target.value)}
                     />
                   </div>
-                  <input 
-                    type="text"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Ej: Rodilla derecha, cara interna..."
-                    value={formData.consultation.pain_location}
-                    onChange={(e) => updateField('consultation', 'pain_location', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-slate-700">Mecanismo de Lesión</label>
-                    <VoiceInput 
-                      label="Mecanismo de Lesión" 
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-slate-700">Mecanismo de Lesión</label>
+                      <VoiceInput 
+                        label="Mecanismo de Lesión" 
+                        value={formData.consultation.mechanism}
+                        onResult={(text) => updateField('consultation', 'mechanism', text)} 
+                      />
+                    </div>
+                    <textarea 
+                      rows={2}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="¿Cómo ocurrió? (Caída, torcedura, golpe directo, inicio insidioso)"
                       value={formData.consultation.mechanism}
-                      onResult={(text) => updateField('consultation', 'mechanism', text)} 
+                      onChange={(e) => updateField('consultation', 'mechanism', e.target.value)}
                     />
                   </div>
-                  <textarea 
-                    rows={2}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="¿Cómo ocurrió? (Caída, torcedura...)"
-                    value={formData.consultation.mechanism}
-                    onChange={(e) => updateField('consultation', 'mechanism', e.target.value)}
-                  />
                 </div>
-                <div className="grid grid-cols-2 gap-6">
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">Tipo de Dolor</label>
                     <select 
@@ -290,37 +323,51 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                       <option value="punzante">Punzante</option>
                       <option value="sordo">Sordo</option>
                       <option value="electrico">Eléctrico (Quemante)</option>
-                      <option value="mecanico">Mecánico</option>
+                      <option value="mecanico">Mecánico (Solo al mover)</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">Escala EVA (1-10): {formData.consultation.eva}</label>
-                    <input 
-                      type="range"
-                      min="1"
-                      max="10"
-                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
-                      value={formData.consultation.eva}
-                      onChange={(e) => updateField('consultation', 'eva', parseInt(e.target.value))}
-                    />
+                    <div className="flex items-center gap-4">
+                      <span className="text-xs text-emerald-500 font-bold">1</span>
+                      <input 
+                        type="range"
+                        min="1"
+                        max="10"
+                        className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                        value={formData.consultation.eva}
+                        onChange={(e) => updateField('consultation', 'eva', parseInt(e.target.value))}
+                      />
+                      <span className="text-xs text-red-500 font-bold">10</span>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-slate-700">Tiempo de Evolución</label>
-                    <VoiceInput 
-                      label="Evolución" 
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-slate-700">Tiempo de Evolución</label>
+                      <VoiceInput 
+                        label="Evolución" 
+                        value={formData.consultation.evolution}
+                        onResult={(text) => updateField('consultation', 'evolution', text)} 
+                      />
+                    </div>
+                    <select 
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary mb-2"
+                      value={formData.consultation.evolution_type}
+                      onChange={(e) => updateField('consultation', 'evolution_type', e.target.value)}
+                    >
+                      <option value="agudo">Agudo (Reciente)</option>
+                      <option value="cronico">Crónico</option>
+                    </select>
+                    <input 
+                      type="text"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Tiempo transcurrido (ej: 3 semanas)..."
                       value={formData.consultation.evolution}
-                      onResult={(text) => updateField('consultation', 'evolution', text)} 
+                      onChange={(e) => updateField('consultation', 'evolution', e.target.value)}
                     />
                   </div>
-                  <input 
-                    type="text"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="¿Agudo o crónico? Tiempo transcurrido..."
-                    value={formData.consultation.evolution}
-                    onChange={(e) => updateField('consultation', 'evolution', e.target.value)}
-                  />
                 </div>
               </div>
             </div>
@@ -469,7 +516,7 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                   <textarea 
                     rows={2}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Pulso, sensibilidad, fuerza (Daniels)..."
+                    placeholder="Pulso, sensibilidad, fuerza muscular (Escala de Daniels)..."
                     value={formData.physical_exam.neurovascular}
                     onChange={(e) => updateField('physical_exam', 'neurovascular', e.target.value)}
                   />
@@ -550,10 +597,18 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                       onResult={(text) => updateField('plan', 'treatment_plan', text)} 
                     />
                   </div>
+                  <select 
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary mb-2"
+                    value={formData.plan.treatment_type}
+                    onChange={(e) => updateField('plan', 'treatment_type', e.target.value)}
+                  >
+                    <option value="conservador">Conservador (Fisioterapia, medicamentos, reposo)</option>
+                    <option value="quirurgico">Quirúrgico</option>
+                  </select>
                   <textarea 
                     rows={3}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Conservador o quirúrgico..."
+                    placeholder="Detalles del plan..."
                     value={formData.plan.treatment_plan}
                     onChange={(e) => updateField('plan', 'treatment_plan', e.target.value)}
                   />

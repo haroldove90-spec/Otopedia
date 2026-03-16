@@ -20,6 +20,7 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
   const [interimText, setInterimText] = useState('');
   const recognitionRef = useRef<any>(null);
   const initialValueRef = useRef('');
+  const manuallyStoppedRef = useRef(false);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -57,13 +58,27 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
 
       recognition.onerror = (event: any) => {
         console.error("Speech recognition error:", event.error);
+        if (event.error === 'no-speech') {
+          // Ignore no-speech errors to keep it alive
+          return;
+        }
         setIsRecording(false);
         setInterimText('');
       };
 
       recognition.onend = () => {
-        setIsRecording(false);
-        setInterimText('');
+        if (!manuallyStoppedRef.current && isRecording) {
+          // Restart if it stopped unexpectedly (e.g. silence timeout)
+          try {
+            recognition.start();
+          } catch (e) {
+            console.error("Failed to restart recognition:", e);
+            setIsRecording(false);
+          }
+        } else {
+          setIsRecording(false);
+          setInterimText('');
+        }
       };
 
       recognitionRef.current = recognition;
@@ -71,14 +86,16 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
 
     return () => {
       if (recognitionRef.current) {
+        manuallyStoppedRef.current = true;
         recognitionRef.current.stop();
       }
     };
-  }, [onResult]);
+  }, [onResult, isRecording]);
 
   const startRecording = () => {
     if (recognitionRef.current) {
       try {
+        manuallyStoppedRef.current = false;
         initialValueRef.current = value || '';
         recognitionRef.current.start();
         setIsRecording(true);
@@ -92,6 +109,7 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
 
   const stopRecording = () => {
     if (recognitionRef.current && isRecording) {
+      manuallyStoppedRef.current = true;
       recognitionRef.current.stop();
       setIsRecording(false);
       setInterimText('');
