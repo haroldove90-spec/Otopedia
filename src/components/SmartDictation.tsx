@@ -13,6 +13,7 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const startRecording = async () => {
     try {
@@ -41,6 +42,19 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
 
       mediaRecorder.start();
       setIsRecording(true);
+
+      // Set auto-stop timeout based on settings
+      const savedDuration = localStorage.getItem('dictation_duration');
+      const durationMin = savedDuration ? parseInt(savedDuration) : 5;
+      
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        if (isRecording) {
+          stopRecording();
+          alert(`La grabación inteligente se ha detenido automáticamente después de ${durationMin} minutos.`);
+        }
+      }, durationMin * 60 * 1000);
+
     } catch (err: any) {
       console.error("Error accessing microphone:", err);
       if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
@@ -54,6 +68,10 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     }
   };
 

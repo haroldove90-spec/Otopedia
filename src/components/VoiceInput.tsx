@@ -21,6 +21,7 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
   const recognitionRef = useRef<any>(null);
   const initialValueRef = useRef('');
   const manuallyStoppedRef = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -68,6 +69,7 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
         }
         setIsRecording(false);
         setInterimText('');
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
       };
 
       recognition.onend = () => {
@@ -78,10 +80,12 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
           } catch (e) {
             console.error("Failed to restart recognition:", e);
             setIsRecording(false);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
           }
         } else {
           setIsRecording(false);
           setInterimText('');
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
         }
       };
 
@@ -93,6 +97,7 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
         manuallyStoppedRef.current = true;
         recognitionRef.current.stop();
       }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [onResult, isRecording]);
 
@@ -103,6 +108,17 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
         initialValueRef.current = value || '';
         recognitionRef.current.start();
         setIsRecording(true);
+
+        // Set auto-stop timeout based on settings
+        const savedDuration = localStorage.getItem('dictation_duration');
+        const durationMin = savedDuration ? parseInt(savedDuration) : 5;
+        
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
+          stopRecording();
+          alert(`El dictado se ha detenido automáticamente después de ${durationMin} minutos.`);
+        }, durationMin * 60 * 1000);
+
       } catch (err) {
         console.error("Error starting recognition:", err);
       }
@@ -117,6 +133,10 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
       recognitionRef.current.stop();
       setIsRecording(false);
       setInterimText('');
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     }
   };
 
