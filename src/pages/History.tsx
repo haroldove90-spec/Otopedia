@@ -79,20 +79,27 @@ export default function History() {
     }
   };
 
-  const handleSaveHistory = async (formData: any) => {
+  const handleSaveHistory = async (formData: any, shouldClose = true) => {
     try {
       const payload = {
         patient_id: formData.patient_id,
         extracted_data: formData
       };
 
+      let result;
       if (selectedHistory.id) {
-        await supabase.from('clinical_notes').update(payload).eq('id', selectedHistory.id);
+        result = await supabase.from('clinical_notes').update(payload).eq('id', selectedHistory.id).select();
       } else {
-        await supabase.from('clinical_notes').insert([payload]);
+        result = await supabase.from('clinical_notes').insert([payload]).select();
       }
       
-      setShowModal(false);
+      if (result.data && result.data[0]) {
+        setSelectedHistory(prev => ({ ...prev, id: result.data[0].id, extracted_data: result.data[0].extracted_data }));
+      }
+
+      if (shouldClose) {
+        setShowModal(false);
+      }
       fetchData();
     } catch (error) {
       console.error('Error saving history:', error);

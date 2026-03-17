@@ -30,7 +30,6 @@ import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, end
 import { es } from 'date-fns/locale';
 import { supabase } from '../lib/supabase';
 import { Appointment, Patient, ClinicalHistory, DashboardMetrics, UserRole } from '../types';
-import ClinicalHistoryForm from '../components/ClinicalHistoryForm';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 

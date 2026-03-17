@@ -19,7 +19,7 @@ import MicTestModal from './MicTestModal';
 
 interface ClinicalHistoryFormProps {
   initialData?: any;
-  onSave: (data: any) => void;
+  onSave: (data: any, shouldClose?: boolean) => void;
   onCancel: () => void;
   patients: any[];
 }
@@ -87,6 +87,7 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
   const [formData, setFormData] = useState(getInitialState());
   const [activeTab, setActiveTab] = useState('identification');
   const [isMicModalOpen, setIsMicModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const tabs = [
     { id: 'identification', label: 'Identificación', icon: User },
@@ -96,6 +97,34 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
     { id: 'diagnostics', label: 'Estudios', icon: Beaker },
     { id: 'plan', label: 'Diagnóstico y Plan', icon: ClipboardList },
   ];
+
+  const handleSaveAndContinue = async () => {
+    setIsSaving(true);
+    try {
+      await onSave(formData, false);
+      goToNextTab();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const goToNextTab = () => {
+    const currentIndex = tabs.findIndex(t => t.id === activeTab);
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1].id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      onSave(formData, true);
+    }
+  };
+
+  const goToPrevTab = () => {
+    const currentIndex = tabs.findIndex(t => t.id === activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1].id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const handleDictation = (data: any) => {
     // Deep merge extracted data into form data to avoid overwriting nested objects
@@ -169,13 +198,22 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
             </button>
           ))}
           
-          <div className="hidden lg:block mt-auto pt-4 border-t border-slate-200">
+          <div className="hidden lg:block mt-auto pt-4 border-t border-slate-200 space-y-2">
             <button 
-              onClick={() => onSave(formData)}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-200"
+              onClick={() => onSave(formData, false)}
+              disabled={isSaving}
+              className="w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 p-3 rounded-xl font-bold transition-all disabled:opacity-50"
             >
               <Save size={18} />
-              <span>Guardar Registro</span>
+              <span>{isSaving ? 'Guardando...' : 'Guardar Progreso'}</span>
+            </button>
+            <button 
+              onClick={() => onSave(formData, true)}
+              disabled={isSaving}
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-200 disabled:opacity-50"
+            >
+              <Save size={18} />
+              <span>Finalizar</span>
             </button>
           </div>
         </div>
@@ -285,6 +323,17 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                     onChange={(e) => updateField('identification', 'sport', e.target.value)}
                   />
                 </div>
+              </div>
+              
+              <div className="mt-10 pt-6 border-t border-slate-100 flex justify-end">
+                <button 
+                  onClick={handleSaveAndContinue}
+                  disabled={isSaving}
+                  className="px-8 py-3 bg-primary text-white font-bold rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSaving ? 'Guardando...' : 'Guardar y Siguiente'}
+                  <Activity size={18} />
+                </button>
               </div>
             </div>
           )}
@@ -397,6 +446,23 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                   </div>
                 </div>
               </div>
+
+              <div className="mt-10 pt-6 border-t border-slate-100 flex justify-between">
+                <button 
+                  onClick={goToPrevTab}
+                  className="px-6 py-3 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all"
+                >
+                  Anterior
+                </button>
+                <button 
+                  onClick={handleSaveAndContinue}
+                  disabled={isSaving}
+                  className="px-8 py-3 bg-primary text-white font-bold rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSaving ? 'Guardando...' : 'Guardar y Siguiente'}
+                  <History size={18} />
+                </button>
+              </div>
             </div>
           )}
 
@@ -455,6 +521,23 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                     onChange={(e) => updateField('background', 'systemic', e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div className="mt-10 pt-6 border-t border-slate-100 flex justify-between">
+                <button 
+                  onClick={goToPrevTab}
+                  className="px-6 py-3 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all"
+                >
+                  Anterior
+                </button>
+                <button 
+                  onClick={handleSaveAndContinue}
+                  disabled={isSaving}
+                  className="px-8 py-3 bg-primary text-white font-bold rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSaving ? 'Guardando...' : 'Guardar y Siguiente'}
+                  <Stethoscope size={18} />
+                </button>
               </div>
             </div>
           )}
@@ -549,6 +632,23 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                   />
                 </div>
               </div>
+
+              <div className="mt-10 pt-6 border-t border-slate-100 flex justify-between">
+                <button 
+                  onClick={goToPrevTab}
+                  className="px-6 py-3 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all"
+                >
+                  Anterior
+                </button>
+                <button 
+                  onClick={handleSaveAndContinue}
+                  disabled={isSaving}
+                  className="px-8 py-3 bg-primary text-white font-bold rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSaving ? 'Guardando...' : 'Guardar y Siguiente'}
+                  <Beaker size={18} />
+                </button>
+              </div>
             </div>
           )}
 
@@ -590,6 +690,23 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                     onChange={(e) => updateField('diagnostics', 'laboratory', e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div className="mt-10 pt-6 border-t border-slate-100 flex justify-between">
+                <button 
+                  onClick={goToPrevTab}
+                  className="px-6 py-3 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all"
+                >
+                  Anterior
+                </button>
+                <button 
+                  onClick={handleSaveAndContinue}
+                  disabled={isSaving}
+                  className="px-8 py-3 bg-primary text-white font-bold rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSaving ? 'Guardando...' : 'Guardar y Siguiente'}
+                  <ClipboardList size={18} />
+                </button>
               </div>
             </div>
           )}
@@ -658,17 +775,43 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                   />
                 </div>
               </div>
+
+              <div className="mt-10 pt-6 border-t border-slate-100 flex justify-between">
+                <button 
+                  onClick={goToPrevTab}
+                  className="px-6 py-3 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all"
+                >
+                  Anterior
+                </button>
+                <button 
+                  onClick={() => onSave(formData, true)}
+                  disabled={isSaving}
+                  className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSaving ? 'Guardando...' : 'Finalizar y Guardar'}
+                  <Save size={18} />
+                </button>
+              </div>
             </div>
           )}
 
           {/* Mobile Save Button */}
-          <div className="lg:hidden mt-8 pt-6 border-t border-slate-100">
+          <div className="lg:hidden mt-8 pt-6 border-t border-slate-100 flex flex-col gap-3">
             <button 
-              onClick={() => onSave(formData)}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white p-4 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-200"
+              onClick={() => onSave(formData, false)}
+              disabled={isSaving}
+              className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-700 p-4 rounded-2xl font-bold transition-all disabled:opacity-50"
             >
               <Save size={20} />
-              <span>Guardar Registro</span>
+              <span>{isSaving ? 'Guardando...' : 'Guardar Progreso'}</span>
+            </button>
+            <button 
+              onClick={() => onSave(formData, true)}
+              disabled={isSaving}
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white p-4 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-200 disabled:opacity-50"
+            >
+              <Save size={20} />
+              <span>Finalizar Registro</span>
             </button>
           </div>
           </div>
