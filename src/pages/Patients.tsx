@@ -49,7 +49,7 @@ export default function Patients() {
       const { data, error } = await supabase
         .from('patients')
         .select('*')
-        .order('full_name', { ascending: true });
+        .order('created_at', { ascending: false });
       if (error) throw error;
       if (data) setPatients(data);
     } catch (error: any) {
@@ -122,55 +122,70 @@ export default function Patients() {
               type="text" 
               placeholder="Buscar por nombre o email..." 
               className="pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none w-80"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-          {patients.map((p) => (
-            <div key={p.id} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 hover:border-primary/20 transition-all group relative">
-              <button className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600">
-                <MoreVertical size={18} />
-              </button>
-              
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 bg-primary-light text-primary rounded-2xl flex items-center justify-center text-xl font-bold">
-                  {p.full_name.charAt(0)}
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800">{p.full_name}</h4>
-                  <p className="text-xs text-slate-500">ID: {p.id.slice(0, 8)}</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-sm text-slate-600">
-                  <Mail size={16} className="text-slate-400" />
-                  <span>{p.email || 'Sin email'}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-slate-600">
-                  <Phone size={16} className="text-slate-400" />
-                  <span>{p.phone || 'Sin teléfono'}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-slate-600">
-                  <Calendar size={16} className="text-slate-400" />
-                  <span>Nacido: {p.dob ? format(new Date(p.dob), 'dd MMM yyyy', { locale: es }) : 'N/A'}</span>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-slate-200 flex items-center gap-2">
-                <button 
-                  onClick={() => navigate('/history', { state: { openNew: true, patientId: p.id } })}
-                  className="flex-1 py-2 bg-white text-primary text-xs font-bold rounded-xl border border-primary/10 hover:bg-primary-light transition-colors flex items-center justify-center gap-2"
-                >
-                  <FileText size={14} /> Historial
+          {patients.filter(p => 
+            p.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()))
+          ).length > 0 ? (
+            patients.filter(p => 
+              p.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()))
+            ).map((p) => (
+              <div key={p.id} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 hover:border-primary/20 transition-all group relative">
+                <button className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600">
+                  <MoreVertical size={18} />
                 </button>
-                <button className="flex-1 py-2 bg-white text-slate-600 text-xs font-bold rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-                  <Edit2 size={14} /> Editar
-                </button>
+                
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-primary-light text-primary rounded-2xl flex items-center justify-center text-xl font-bold">
+                    {p.full_name.charAt(0)}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800">{p.full_name}</h4>
+                    <p className="text-xs text-slate-500">ID: {p.id.slice(0, 8)}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm text-slate-600">
+                    <Mail size={16} className="text-slate-400" />
+                    <span>{p.email || 'Sin email'}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-slate-600">
+                    <Phone size={16} className="text-slate-400" />
+                    <span>{p.phone || 'Sin teléfono'}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-slate-600">
+                    <Calendar size={16} className="text-slate-400" />
+                    <span>Nacido: {p.dob ? format(new Date(p.dob), 'dd MMM yyyy', { locale: es }) : 'N/A'}</span>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-slate-200 flex items-center gap-2">
+                  <button 
+                    onClick={() => navigate('/history', { state: { openNew: true, patientId: p.id } })}
+                    className="flex-1 py-2 bg-white text-primary text-xs font-bold rounded-xl border border-primary/10 hover:bg-primary-light transition-colors flex items-center justify-center gap-2"
+                  >
+                    <FileText size={14} /> Historial
+                  </button>
+                  <button className="flex-1 py-2 bg-white text-slate-600 text-xs font-bold rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                    <Edit2 size={14} /> Editar
+                  </button>
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="col-span-full py-12 text-center text-slate-500">
+              <Users size={48} className="mx-auto mb-4 opacity-20" />
+              <p>No se encontraron pacientes</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
