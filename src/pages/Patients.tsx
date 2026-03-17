@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Users, 
   Plus, 
@@ -20,14 +20,28 @@ import { es } from 'date-fns/locale';
 
 export default function Patients() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [newPatient, setNewPatient] = useState<Partial<Patient>>({});
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     fetchPatients();
-  }, []);
+    
+    // Handle navigation state (from Dashboard)
+    if (location.state) {
+      const state = location.state as any;
+      if (state.openNew) {
+        setShowModal(true);
+      }
+      // Clear state to avoid reopening on reload
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const fetchPatients = async () => {
     setLoading(true);
@@ -36,9 +50,11 @@ export default function Patients() {
         .from('patients')
         .select('*')
         .order('full_name', { ascending: true });
+      if (error) throw error;
       if (data) setPatients(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching patients:', error);
+      alert('Error al cargar pacientes: ' + (error.message || 'Error desconocido'));
     } finally {
       setLoading(false);
     }
@@ -46,13 +62,36 @@ export default function Patients() {
 
   const handleCreatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newPatient.full_name) {
+      alert('El nombre completo es obligatorio');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('patients').insert([newPatient]);
+      const { data, error } = await supabase
+        .from('patients')
+        .insert([
+          {
+            full_name: newPatient.full_name,
+            email: newPatient.email || null,
+            phone: newPatient.phone || null,
+            dob: newPatient.dob || null,
+          }
+        ])
+        .select();
+
       if (error) throw error;
+      
       setShowModal(false);
+      setNewPatient({});
       fetchPatients();
-    } catch (error) {
+      alert('Paciente registrado exitosamente');
+    } catch (error: any) {
       console.error('Error creating patient:', error);
+      alert('Error al crear paciente: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -196,9 +235,10 @@ export default function Patients() {
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-3 bg-primary text-white font-bold rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/20"
+                  disabled={isSubmitting}
+                  className={`flex-1 py-3 bg-primary text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary/20 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary-hover'}`}
                 >
-                  Registrar
+                  {isSubmitting ? 'Registrando...' : 'Registrar'}
                 </button>
               </div>
             </form>

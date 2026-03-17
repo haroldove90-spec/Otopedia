@@ -42,6 +42,8 @@ export default function AgendaDashboard({ role }: AgendaDashboardProps) {
     price: 500
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -67,17 +69,29 @@ export default function AgendaDashboard({ role }: AgendaDashboardProps) {
 
   const handleCreateAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       let patientId = newAppt.patient_id;
 
       if (isNewPatient) {
+        if (!newPatientData.full_name) {
+          alert('El nombre del paciente es obligatorio');
+          setIsSubmitting(false);
+          return;
+        }
+
         const { data: patient, error: pError } = await supabase
           .from('patients')
           .insert([newPatientData])
           .select()
           .single();
         
-        if (pError) throw pError;
+        if (pError) {
+          console.error('Error creating patient:', pError);
+          alert('Error al registrar el nuevo paciente: ' + pError.message);
+          setIsSubmitting(false);
+          return;
+        }
         patientId = patient.id;
       }
 
@@ -101,9 +115,11 @@ export default function AgendaDashboard({ role }: AgendaDashboardProps) {
       setIsNewPatient(false);
       setNewPatientData({ full_name: '', phone: '', email: '', dob: '' });
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating appointment:', error);
-      alert('Error al crear la cita. Por favor verifique los datos.');
+      alert('Error al crear la cita: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -385,9 +401,10 @@ export default function AgendaDashboard({ role }: AgendaDashboardProps) {
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 py-3 bg-primary text-white font-bold rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/20"
+                  disabled={isSubmitting}
+                  className={`flex-1 py-3 bg-primary text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary/20 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary-hover'}`}
                 >
-                  Agendar Cita
+                  {isSubmitting ? 'Agendando...' : 'Agendar Cita'}
                 </button>
               </div>
             </form>

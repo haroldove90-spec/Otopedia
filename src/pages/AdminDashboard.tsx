@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
+  UserPlus,
   Calendar, 
   TrendingUp, 
   DollarSign, 
@@ -191,6 +192,13 @@ export default function AdminDashboard({ role }: AdminDashboardProps) {
           <p className="text-slate-500">Bienvenido de nuevo, Dr. Harold</p>
         </div>
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => navigate('/patients', { state: { openNew: true } })}
+            className="flex items-center gap-2 bg-white text-primary border border-primary/20 hover:bg-primary-light px-4 py-2.5 rounded-xl transition-all shadow-sm"
+          >
+            <UserPlus size={20} />
+            <span>Nuevo Paciente</span>
+          </button>
           <button 
             onClick={handleNewNote}
             className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-primary/20"
