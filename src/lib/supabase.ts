@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://nxhmldjrabnjmpzpbanc.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54aG1sZGpyYWJuam1wenBiYW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNzQ0NTIsImV4cCI6MjA4ODg1MDQ1Mn0.fAxILd_DY74FjrkbCPdzhmaGK2TMRVPaDVAXZqjGoEs';
+// Use environment variables for Supabase configuration
+// In Vercel, add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to Environment Variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nxhmldjrabnjmpzpbanc.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54aG1sZGpyYWJuam1wenBiYW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNzQ0NTIsImV4cCI6MjA4ODg1MDQ1Mn0.fAxILd_DY74FjrkbCPdzhmaGK2TMRVPaDVAXZqjGoEs';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
