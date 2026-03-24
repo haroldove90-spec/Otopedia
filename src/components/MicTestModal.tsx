@@ -15,10 +15,12 @@ export default function MicTestModal({ isOpen, onClose, onSuccess }: MicTestModa
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number | null>(null);
+  const successNotifiedRef = useRef(false);
 
   const startTest = async () => {
     try {
       setStatus('testing');
+      successNotifiedRef.current = false;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
@@ -37,8 +39,9 @@ export default function MicTestModal({ isOpen, onClose, onSuccess }: MicTestModa
         const average = dataArray.reduce((a, b) => a + b) / bufferLength;
         setAudioLevel(average);
         
-        if (average > 10) {
+        if (average > 10 && !successNotifiedRef.current) {
           setStatus('success');
+          successNotifiedRef.current = true;
           if (onSuccess) onSuccess();
         }
         

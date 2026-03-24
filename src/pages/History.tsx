@@ -47,8 +47,8 @@ export default function History() {
     }
   }, [location.state]);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (isBackground = false) => {
+    if (!isBackground) setLoading(true);
     try {
       const { data: histData } = await supabase
         .from('clinical_notes')
@@ -75,7 +75,7 @@ export default function History() {
     } catch (error) {
       console.error('Error fetching history data:', error);
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 
@@ -104,7 +104,7 @@ export default function History() {
     if (shouldClose) {
       setShowModal(false);
     }
-    fetchData();
+    fetchData(true);
   };
 
   const exportToPDF = (history: ClinicalHistory) => {

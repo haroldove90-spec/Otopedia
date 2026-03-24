@@ -102,15 +102,19 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
   const handleSave = async (shouldClose = false) => {
     if (!formData.patient_id) {
       alert("Por favor, seleccione un paciente antes de guardar.");
-      // Scroll to top to show the patient selection
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     setIsSaving(true);
     try {
       await onSave(formData, shouldClose);
-      if (!shouldClose && activeTab === 'identification') {
-        goToNextTab();
+      if (!shouldClose) {
+        // Advance to next tab regardless of which one we are in
+        const currentIndex = tabs.findIndex(t => t.id === activeTab);
+        if (currentIndex < tabs.length - 1) {
+          setActiveTab(tabs[currentIndex + 1].id);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       }
     } catch (err) {
       console.error("Error saving:", err);
