@@ -23,6 +23,12 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
   const manuallyStoppedRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Use a ref for onResult to avoid it being a dependency in useEffect
+  const onResultRef = useRef(onResult);
+  useEffect(() => {
+    onResultRef.current = onResult;
+  }, [onResult]);
+
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition && !recognitionRef.current) {
@@ -51,7 +57,7 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
           if (label.toLowerCase().includes('edad')) {
             const numbers = currentSessionText.match(/\d+/);
             if (numbers) {
-              onResult(numbers[0]);
+              onResultRef.current(numbers[0]);
               setInterimText(numbers[0]);
               return;
             }
@@ -63,26 +69,27 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
           setInterimText(interimTranscript);
 
           const separator = initialValueRef.current ? ' ' : '';
-          onResult(initialValueRef.current + separator + currentSessionText);
+          onResultRef.current(initialValueRef.current + separator + currentSessionText);
         }
       };
 
       recognition.onerror = (event: any) => {
-        console.error("Speech recognition error:", event.error);
-        
+        // Silently handle aborted and no-speech errors as they are common and benign
         if (event.error === 'no-speech' || event.error === 'aborted') {
+          console.log(`Recognition ${event.error}, resetting state...`);
           setIsRecording(false);
           setInterimText('');
           if (timeoutRef.current) clearTimeout(timeoutRef.current);
           return;
         }
 
+        console.error("Speech recognition error:", event.error);
         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
           alert("Acceso al micrófono denegado. Por favor, permite el uso del micrófono en la configuración de tu navegador.");
         } else if (event.error === 'network') {
           alert("Error de red. El dictado por voz requiere una conexión a internet activa.");
         } else {
-          alert(`Error de dictado: ${event.error}. Prueba abriendo la aplicación en una pestaña nueva.`);
+          alert(`Error de dictado: ${event.error}. Intenta de nuevo.`);
         }
         setIsRecording(false);
         setInterimText('');
@@ -106,12 +113,13 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
     }
 
     return () => {
+      // Only stop if unmounting the entire component
       if (recognitionRef.current) {
         manuallyStoppedRef.current = true;
         recognitionRef.current.stop();
       }
     };
-  }, [onResult, label]);
+  }, [label]); // Only depend on label, not onResult
 
   const startRecording = () => {
     if (recognitionRef.current) {
