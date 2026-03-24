@@ -62,10 +62,12 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
         if (event.error === 'no-speech') {
           return;
         }
-        if (event.error === 'not-allowed') {
-          alert("Acceso al micrófono denegado. Por favor, permite el uso del micrófono en la configuración de tu navegador para usar el dictado.");
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          alert("Acceso al micrófono denegado. Por favor, permite el uso del micrófono en la configuración de tu navegador para usar el dictado. Si estás en una pestaña de previsualización, intenta abrir la app en una pestaña nueva.");
         } else if (event.error === 'network') {
           alert("Error de red. El dictado por voz requiere una conexión a internet activa.");
+        } else {
+          alert(`Error de dictado: ${event.error}. Prueba abriendo la aplicación en una pestaña nueva.`);
         }
         setIsRecording(false);
         setInterimText('');

@@ -45,11 +45,14 @@ export default function MicTestModal({ isOpen, onClose }: MicTestModalProps) {
 
       updateLevel();
     } catch (err: any) {
+      console.error("Microphone test error:", err);
       setStatus('error');
-      if (err.name === 'NotAllowedError') {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setErrorMessage('El acceso al micrófono fue denegado. Por favor, actívalo en la configuración de tu navegador.');
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setErrorMessage('No se detectó ningún micrófono conectado. Por favor, conecta uno e inténtalo de nuevo.');
       } else {
-        setErrorMessage('No se encontró ningún micrófono o hay un problema con el hardware.');
+        setErrorMessage(`Error de hardware o permisos (${err.name || 'Desconocido'}). Intenta abrir la app en una pestaña nueva.`);
       }
     }
   };

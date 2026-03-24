@@ -57,8 +57,12 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
 
     } catch (err: any) {
       console.error("Error accessing microphone:", err);
-      if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        // Handle case where no microphone is found
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        alert("Acceso al micrófono denegado. Por favor, permite el uso del micrófono en tu navegador. Si estás en una pestaña de previsualización, intenta abrir la app en una pestaña nueva.");
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        alert("No se encontró ningún micrófono conectado.");
+      } else {
+        alert(`Error al acceder al micrófono: ${err.name}. Intenta abrir la app en una pestaña nueva.`);
       }
     }
   };
