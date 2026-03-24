@@ -99,10 +99,17 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
   ];
 
   const handleSaveAndContinue = async () => {
+    if (!formData.patient_id) {
+      alert("Por favor, seleccione un paciente antes de continuar.");
+      return;
+    }
     setIsSaving(true);
     try {
       await onSave(formData, false);
       goToNextTab();
+    } catch (err) {
+      console.error("Error saving:", err);
+      alert("Hubo un error al guardar los datos. Verifique su conexión.");
     } finally {
       setIsSaving(false);
     }
