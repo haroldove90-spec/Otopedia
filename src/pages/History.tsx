@@ -170,7 +170,7 @@ export default function History() {
     return (
       <div className="-m-4 md:-m-8">
         <ClinicalHistoryForm 
-          initialData={selectedHistory.extracted_data}
+          initialData={selectedHistory.extracted_data || { patient_id: selectedHistory.patient_id }}
           patients={patients}
           onSave={handleSaveHistory}
           onCancel={() => setShowModal(false)}
