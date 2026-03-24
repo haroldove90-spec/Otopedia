@@ -4,9 +4,10 @@ import { Mic, CheckCircle2, AlertCircle, Volume2, X } from 'lucide-react';
 interface MicTestModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function MicTestModal({ isOpen, onClose }: MicTestModalProps) {
+export default function MicTestModal({ isOpen, onClose, onSuccess }: MicTestModalProps) {
   const [status, setStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [audioLevel, setAudioLevel] = useState(0);
@@ -38,6 +39,7 @@ export default function MicTestModal({ isOpen, onClose }: MicTestModalProps) {
         
         if (average > 10) {
           setStatus('success');
+          if (onSuccess) onSuccess();
         }
         
         animationRef.current = requestAnimationFrame(updateLevel);

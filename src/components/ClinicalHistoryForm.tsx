@@ -87,6 +87,7 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
   const [formData, setFormData] = useState(getInitialState());
   const [activeTab, setActiveTab] = useState('identification');
   const [isMicModalOpen, setIsMicModalOpen] = useState(false);
+  const [isMicTested, setIsMicTested] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const tabs = [
@@ -98,15 +99,19 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
     { id: 'plan', label: 'Diagnóstico y Plan', icon: ClipboardList },
   ];
 
-  const handleSaveAndContinue = async () => {
+  const handleSave = async (shouldClose = false) => {
     if (!formData.patient_id) {
-      alert("Por favor, seleccione un paciente antes de continuar.");
+      alert("Por favor, seleccione un paciente antes de guardar.");
+      // Scroll to top to show the patient selection
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     setIsSaving(true);
     try {
-      await onSave(formData, false);
-      goToNextTab();
+      await onSave(formData, shouldClose);
+      if (!shouldClose && activeTab === 'identification') {
+        goToNextTab();
+      }
     } catch (err) {
       console.error("Error saving:", err);
       alert("Hubo un error al guardar los datos. Verifique su conexión.");
@@ -115,13 +120,15 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
     }
   };
 
+  const handleSaveAndContinue = () => handleSave(false);
+
   const goToNextTab = () => {
     const currentIndex = tabs.findIndex(t => t.id === activeTab);
     if (currentIndex < tabs.length - 1) {
       setActiveTab(tabs[currentIndex + 1].id);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      onSave(formData, true);
+      handleSave(true);
     }
   };
 
@@ -185,6 +192,10 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
       <MicTestModal 
         isOpen={isMicModalOpen} 
         onClose={() => setIsMicModalOpen(false)} 
+        onSuccess={() => {
+          setIsMicTested(true);
+          setIsMicModalOpen(false);
+        }}
       />
 
       <div className="flex flex-1 flex-col lg:flex-row">
@@ -207,7 +218,7 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
           
           <div className="hidden lg:block mt-auto pt-4 border-t border-slate-200 space-y-2">
             <button 
-              onClick={() => onSave(formData, false)}
+              onClick={() => handleSave(false)}
               disabled={isSaving}
               className="w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 p-3 rounded-xl font-bold transition-all disabled:opacity-50"
             >
@@ -215,7 +226,7 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
               <span>{isSaving ? 'Guardando...' : 'Guardar Progreso'}</span>
             </button>
             <button 
-              onClick={() => onSave(formData, true)}
+              onClick={() => handleSave(true)}
               disabled={isSaving}
               className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-200 disabled:opacity-50"
             >
@@ -228,25 +239,27 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
         {/* Form Content */}
         <div className="flex-1 p-4 md:p-8 bg-white">
           <div className="max-w-4xl mx-auto">
-            {/* Mic Test Alert - Very Visible */}
-            <div className="mb-8 p-4 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center shadow-lg shadow-primary/30">
-                  <Mic size={24} />
+            {/* Mic Test Alert - Only show if not tested */}
+            {!isMicTested && (
+              <div className="mb-8 p-4 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center shadow-lg shadow-primary/30">
+                    <Mic size={24} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800">¿Funciona su micrófono?</h4>
+                    <p className="text-sm text-slate-500">Asegúrese de que el dictado capture su voz correctamente antes de empezar.</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800">¿Funciona su micrófono?</h4>
-                  <p className="text-sm text-slate-500">Asegúrese de que el dictado capture su voz correctamente antes de empezar.</p>
-                </div>
+                <button
+                  onClick={() => setIsMicModalOpen(true)}
+                  className="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                >
+                  <Volume2 size={18} />
+                  Probar Micrófono Ahora
+                </button>
               </div>
-              <button
-                onClick={() => setIsMicModalOpen(true)}
-                className="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-              >
-                <Volume2 size={18} />
-                Probar Micrófono Ahora
-              </button>
-            </div>
+            )}
 
             {activeTab === 'identification' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -791,7 +804,7 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
                   Anterior
                 </button>
                 <button 
-                  onClick={() => onSave(formData, true)}
+                  onClick={() => handleSave(true)}
                   disabled={isSaving}
                   className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 disabled:opacity-50"
                 >
@@ -805,7 +818,7 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
           {/* Mobile Save Button */}
           <div className="lg:hidden mt-8 pt-6 border-t border-slate-100 flex flex-col gap-3">
             <button 
-              onClick={() => onSave(formData, false)}
+              onClick={() => handleSave(false)}
               disabled={isSaving}
               className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-700 p-4 rounded-2xl font-bold transition-all disabled:opacity-50"
             >
@@ -813,7 +826,7 @@ export default function ClinicalHistoryForm({ initialData, onSave, onCancel, pat
               <span>{isSaving ? 'Guardando...' : 'Guardar Progreso'}</span>
             </button>
             <button 
-              onClick={() => onSave(formData, true)}
+              onClick={() => handleSave(true)}
               disabled={isSaving}
               className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white p-4 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-200 disabled:opacity-50"
             >
