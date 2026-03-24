@@ -134,6 +134,20 @@ export default function MicTestModal({ isOpen, onClose }: MicTestModalProps) {
               {status === 'success' && 'Todo está listo para que comiences el dictado de la anamnesis.'}
               {status === 'error' && errorMessage}
             </p>
+            {status === 'error' && (
+              <button 
+                onClick={async () => {
+                  const devices = await navigator.mediaDevices.enumerateDevices();
+                  const audioDevices = devices.filter(d => d.kind === 'audioinput');
+                  alert(audioDevices.length > 0 
+                    ? `Dispositivos encontrados: ${audioDevices.map(d => d.label || 'Sin nombre').join(', ')}` 
+                    : "No se encontró NINGÚN dispositivo de audio en el sistema.");
+                }}
+                className="text-[10px] text-primary underline mt-2 block"
+              >
+                Ver dispositivos detectados por el sistema
+              </button>
+            )}
           </div>
 
           {status === 'testing' && (
