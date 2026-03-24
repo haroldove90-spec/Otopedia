@@ -21,12 +21,15 @@ export default function Settings() {
 
   const loadSettings = async () => {
     setIsLoading(true);
+    let loadedFromSupabase = false;
+
     try {
       // 1. Try to load from Supabase first
       const { data, error } = await supabase
         .from('clinic_settings')
         .select('*')
-        .single();
+        .eq('id', 'default-settings')
+        .maybeSingle();
 
       if (data && !error) {
         setDictationDuration(data.dictation_duration || 5);
@@ -41,28 +44,31 @@ export default function Settings() {
         localStorage.setItem('language', data.language);
         localStorage.setItem('alert_sound', data.alert_sound.toString());
         localStorage.setItem('daily_reminders', data.daily_reminders.toString());
-      } else {
-        // 2. Fallback to localStorage if Supabase fails or table doesn't exist
-        const savedDuration = localStorage.getItem('dictation_duration');
-        if (savedDuration) setDictationDuration(parseInt(savedDuration));
-
-        const savedClinicName = localStorage.getItem('clinic_name');
-        if (savedClinicName) setClinicName(savedClinicName);
-
-        const savedLanguage = localStorage.getItem('language');
-        if (savedLanguage) setLanguage(savedLanguage);
-
-        const savedAlertSound = localStorage.getItem('alert_sound');
-        if (savedAlertSound) setAlertSound(savedAlertSound === 'true');
-
-        const savedDailyReminders = localStorage.getItem('daily_reminders');
-        if (savedDailyReminders) setDailyReminders(savedDailyReminders === 'true');
+        loadedFromSupabase = true;
       }
     } catch (err) {
-      console.log("Error loading settings from Supabase, using local storage");
-    } finally {
-      setIsLoading(false);
+      console.error("Error loading settings from Supabase:", err);
     }
+
+    // 2. Fallback to localStorage if Supabase failed or returned nothing
+    if (!loadedFromSupabase) {
+      const savedDuration = localStorage.getItem('dictation_duration');
+      if (savedDuration) setDictationDuration(parseInt(savedDuration));
+
+      const savedClinicName = localStorage.getItem('clinic_name');
+      if (savedClinicName) setClinicName(savedClinicName);
+
+      const savedLanguage = localStorage.getItem('language');
+      if (savedLanguage) setLanguage(savedLanguage);
+
+      const savedAlertSound = localStorage.getItem('alert_sound');
+      if (savedAlertSound) setAlertSound(savedAlertSound === 'true');
+
+      const savedDailyReminders = localStorage.getItem('daily_reminders');
+      if (savedDailyReminders) setDailyReminders(savedDailyReminders === 'true');
+    }
+
+    setIsLoading(false);
   };
 
   const handleChangeDuration = (val: number) => {
@@ -94,7 +100,7 @@ export default function Settings() {
     setIsSaving(true);
     
     try {
-      // 1. Save to LocalStorage (immediate)
+      // 1. Save to LocalStorage (immediate feedback)
       localStorage.setItem('dictation_duration', dictationDuration.toString());
       localStorage.setItem('clinic_name', clinicName);
       localStorage.setItem('language', language);
@@ -103,6 +109,7 @@ export default function Settings() {
 
       // 2. Try to save to Supabase
       const settingsData = {
+        id: 'default-settings',
         clinic_name: clinicName,
         language: language,
         dictation_duration: dictationDuration,
@@ -113,18 +120,29 @@ export default function Settings() {
 
       const { error } = await supabase
         .from('clinic_settings')
-        .upsert({ id: 'default-settings', ...settingsData });
+        .upsert(settingsData, { onConflict: 'id' });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        // If it's a "table not found" error, we still show success because localStorage worked
+        // but we log it for the developer.
+        setIsSaving(false);
+        setHasChanges(false);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+        return;
+      }
 
-    } catch (err) {
-      console.error("Error saving to Supabase:", err);
-      // We don't alert here because localStorage already worked
-    } finally {
       setIsSaving(false);
       setHasChanges(false);
       setShowSuccess(true);
+      alert("¡Configuración guardada correctamente!");
       setTimeout(() => setShowSuccess(false), 3000);
+
+    } catch (err) {
+      console.error("Error saving settings:", err);
+      setIsSaving(false);
+      alert("Error al guardar la configuración. Intente de nuevo.");
     }
   };
 
@@ -253,6 +271,17 @@ export default function Settings() {
                 <span>15 min</span>
                 <span>30 min</span>
               </div>
+              
+              {hasChanges && (
+                <button 
+                  onClick={saveAllSettings}
+                  disabled={isSaving}
+                  className="w-full mt-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-hover transition-all flex items-center justify-center gap-2"
+                >
+                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save size={16} />}
+                  {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              )}
             </div>
           </div>
         </div>
