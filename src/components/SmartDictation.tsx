@@ -17,6 +17,14 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
 
   const startRecording = async () => {
     try {
+      // Stop any other active recognition globally
+      if ((window as any).stopActiveRecognition && (window as any).stopActiveRecognition !== stopRecording) {
+        (window as any).stopActiveRecognition();
+      }
+      
+      // Register this instance's stop function as the active one
+      (window as any).stopActiveRecognition = stopRecording;
+
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.error("Browser does not support audio recording");
         return;
@@ -69,6 +77,11 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
+      // Clear the global lock if this instance was the active one
+      if ((window as any).stopActiveRecognition === stopRecording) {
+        (window as any).stopActiveRecognition = null;
+      }
+
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Bell, Shield, Database, Mic, Volume2 } from 'lucide-react';
+import { Settings as SettingsIcon, Bell, Shield, Database, Mic, Save, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Settings() {
   const [dictationDuration, setDictationDuration] = useState(5); // Default 5 minutes
@@ -7,6 +8,10 @@ export default function Settings() {
   const [language, setLanguage] = useState('Español');
   const [alertSound, setAlertSound] = useState(true);
   const [dailyReminders, setDailyReminders] = useState(true);
+  
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const savedDuration = localStorage.getItem('dictation_duration');
@@ -25,37 +30,92 @@ export default function Settings() {
     if (savedDailyReminders) setDailyReminders(savedDailyReminders === 'true');
   }, []);
 
-  const handleSaveDuration = (val: number) => {
+  const handleChangeDuration = (val: number) => {
     setDictationDuration(val);
-    localStorage.setItem('dictation_duration', val.toString());
+    setHasChanges(true);
   };
 
-  const handleSaveClinicName = (val: string) => {
+  const handleChangeClinicName = (val: string) => {
     setClinicName(val);
-    localStorage.setItem('clinic_name', val);
+    setHasChanges(true);
   };
 
-  const handleSaveLanguage = (val: string) => {
+  const handleChangeLanguage = (val: string) => {
     setLanguage(val);
-    localStorage.setItem('language', val);
+    setHasChanges(true);
   };
 
-  const handleSaveAlertSound = (val: boolean) => {
+  const handleChangeAlertSound = (val: boolean) => {
     setAlertSound(val);
-    localStorage.setItem('alert_sound', val.toString());
+    setHasChanges(true);
   };
 
-  const handleSaveDailyReminders = (val: boolean) => {
+  const handleChangeDailyReminders = (val: boolean) => {
     setDailyReminders(val);
-    localStorage.setItem('daily_reminders', val.toString());
+    setHasChanges(true);
+  };
+
+  const saveAllSettings = async () => {
+    setIsSaving(true);
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    localStorage.setItem('dictation_duration', dictationDuration.toString());
+    localStorage.setItem('clinic_name', clinicName);
+    localStorage.setItem('language', language);
+    localStorage.setItem('alert_sound', alertSound.toString());
+    localStorage.setItem('daily_reminders', dailyReminders.toString());
+    
+    setIsSaving(false);
+    setHasChanges(false);
+    setShowSuccess(true);
+    
+    setTimeout(() => setShowSuccess(false), 3000);
   };
 
   return (
-    <div className="space-y-8 max-w-4xl">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-800">Configuración</h1>
-        <p className="text-slate-500">Administra las preferencias de tu clínica</p>
+    <div className="space-y-8 max-w-4xl pb-20">
+      <div className="flex items-center justify-between sticky top-0 bg-slate-50/80 backdrop-blur-md py-4 z-10">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-800">Configuración</h1>
+          <p className="text-slate-500">Administra las preferencias de tu clínica</p>
+        </div>
+        
+        <AnimatePresence>
+          {hasChanges && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 10 }}
+              onClick={saveAllSettings}
+              disabled={isSaving}
+              className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+            >
+              {isSaving ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Save size={20} />
+              )}
+              {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-emerald-50 border border-emerald-100 text-emerald-700 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-sm"
+          >
+            <CheckCircle2 size={20} className="text-emerald-500" />
+            <span className="text-sm font-medium">¡Configuración guardada correctamente!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* General Settings */}
@@ -74,7 +134,7 @@ export default function Settings() {
               <input 
                 type="text" 
                 value={clinicName} 
-                onChange={(e) => handleSaveClinicName(e.target.value)}
+                onChange={(e) => handleChangeClinicName(e.target.value)}
                 className="bg-slate-50 border-none rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary outline-none" 
               />
             </div>
@@ -86,7 +146,7 @@ export default function Settings() {
               </div>
               <select 
                 value={language}
-                onChange={(e) => handleSaveLanguage(e.target.value)}
+                onChange={(e) => handleChangeLanguage(e.target.value)}
                 className="bg-slate-50 border-none rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary outline-none"
               >
                 <option>Español</option>
@@ -120,7 +180,7 @@ export default function Settings() {
                 max="30" 
                 step="1"
                 value={dictationDuration}
-                onChange={(e) => handleSaveDuration(parseInt(e.target.value))}
+                onChange={(e) => handleChangeDuration(parseInt(e.target.value))}
                 className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary"
               />
               <div className="flex justify-between mt-2 text-[10px] text-slate-400 font-medium">
@@ -148,7 +208,7 @@ export default function Settings() {
               <input 
                 type="checkbox" 
                 checked={alertSound} 
-                onChange={(e) => handleSaveAlertSound(e.target.checked)}
+                onChange={(e) => handleChangeAlertSound(e.target.checked)}
                 className="w-4 h-4 text-primary rounded focus:ring-primary cursor-pointer" 
               />
             </div>
@@ -161,7 +221,7 @@ export default function Settings() {
               <input 
                 type="checkbox" 
                 checked={dailyReminders} 
-                onChange={(e) => handleSaveDailyReminders(e.target.checked)}
+                onChange={(e) => handleChangeDailyReminders(e.target.checked)}
                 className="w-4 h-4 text-primary rounded focus:ring-primary cursor-pointer" 
               />
             </div>

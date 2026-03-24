@@ -88,8 +88,13 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
           alert("Acceso al micrófono denegado. Por favor, permite el uso del micrófono en la configuración de tu navegador.");
         } else if (event.error === 'network') {
           alert("Error de red. El dictado por voz requiere una conexión a internet activa.");
+        } else if (event.error === 'audio-capture') {
+          alert("No se detectó ningún micrófono. Por favor, conecta uno e intenta de nuevo.");
         } else {
-          alert(`Error de dictado: ${event.error}. Intenta de nuevo.`);
+          // Only alert for other errors if we were actually recording
+          if (isRecording) {
+            alert(`Error de dictado: ${event.error}. Intenta de nuevo o abre la app en una pestaña nueva.`);
+          }
         }
         setIsRecording(false);
         setInterimText('');
@@ -124,6 +129,14 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
   const startRecording = () => {
     if (recognitionRef.current) {
       try {
+        // Stop any other active recognition globally
+        if ((window as any).stopActiveRecognition && (window as any).stopActiveRecognition !== stopRecording) {
+          (window as any).stopActiveRecognition();
+        }
+        
+        // Register this instance's stop function as the active one
+        (window as any).stopActiveRecognition = stopRecording;
+
         manuallyStoppedRef.current = false;
         initialValueRef.current = value || '';
         recognitionRef.current.start();
@@ -149,6 +162,11 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
 
   const stopRecording = () => {
     if (recognitionRef.current && isRecording) {
+      // Clear the global lock if this instance was the active one
+      if ((window as any).stopActiveRecognition === stopRecording) {
+        (window as any).stopActiveRecognition = null;
+      }
+
       manuallyStoppedRef.current = true;
       recognitionRef.current.stop();
       setIsRecording(false);
