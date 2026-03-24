@@ -59,9 +59,15 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
 
       recognition.onerror = (event: any) => {
         console.error("Speech recognition error:", event.error);
-        if (event.error === 'no-speech') {
+        
+        if (event.error === 'no-speech' || event.error === 'aborted') {
+          // 'no-speech' and 'aborted' are often benign or temporary interruptions
+          setIsRecording(false);
+          setInterimText('');
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
           return;
         }
+
         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
           alert("Acceso al micrófono denegado. Por favor, permite el uso del micrófono en la configuración de tu navegador para usar el dictado. Si estás en una pestaña de previsualización, intenta abrir la app en una pestaña nueva.");
         } else if (event.error === 'network') {
