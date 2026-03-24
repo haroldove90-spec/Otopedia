@@ -47,12 +47,22 @@ export default function MicTestModal({ isOpen, onClose }: MicTestModalProps) {
     } catch (err: any) {
       console.error("Microphone test error:", err);
       setStatus('error');
+      
+      // Check if any audio input devices exist at all
+      let hasHardware = false;
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        hasHardware = devices.some(device => device.kind === 'audioinput');
+      } catch (e) {
+        console.error("Error enumerating devices:", e);
+      }
+
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setErrorMessage('El acceso al micrófono fue denegado. Por favor, actívalo en la configuración de tu navegador.');
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        setErrorMessage('No se detectó ningún micrófono conectado. Por favor, conecta uno e inténtalo de nuevo.');
+        setErrorMessage('El acceso al micrófono fue denegado. Por favor, haz clic en el candado junto a la URL y permite el acceso.');
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError' || !hasHardware) {
+        setErrorMessage('No se detectó ningún micrófono físico. Por favor, conecta uno o verifica que no esté deshabilitado en la configuración de Windows.');
       } else {
-        setErrorMessage(`Error de hardware o permisos (${err.name || 'Desconocido'}). Intenta abrir la app en una pestaña nueva.`);
+        setErrorMessage(`Error de hardware o permisos (${err.name || 'Desconocido'}). Intenta abrir la app en una pestaña nueva o reiniciar el navegador.`);
       }
     }
   };
