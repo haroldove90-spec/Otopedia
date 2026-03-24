@@ -20,6 +20,8 @@ export default function SmartDictation({ onDataExtracted, context = "medical rec
       // Stop any other active recognition globally
       if ((window as any).stopActiveRecognition && (window as any).stopActiveRecognition !== stopRecording) {
         (window as any).stopActiveRecognition();
+        // Small delay to allow the hardware to release
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
       
       // Register this instance's stop function as the active one

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Bell, Shield, Database, Mic, Save, CheckCircle2 } from 'lucide-react';
+import { Settings as SettingsIcon, Bell, Shield, Database, Mic, Save, CheckCircle2, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../lib/supabase';
 
 export default function Settings() {
   const [dictationDuration, setDictationDuration] = useState(5); // Default 5 minutes
@@ -12,23 +13,57 @@ export default function Settings() {
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedDuration = localStorage.getItem('dictation_duration');
-    if (savedDuration) setDictationDuration(parseInt(savedDuration));
-
-    const savedClinicName = localStorage.getItem('clinic_name');
-    if (savedClinicName) setClinicName(savedClinicName);
-
-    const savedLanguage = localStorage.getItem('language');
-    if (savedLanguage) setLanguage(savedLanguage);
-
-    const savedAlertSound = localStorage.getItem('alert_sound');
-    if (savedAlertSound) setAlertSound(savedAlertSound === 'true');
-
-    const savedDailyReminders = localStorage.getItem('daily_reminders');
-    if (savedDailyReminders) setDailyReminders(savedDailyReminders === 'true');
+    loadSettings();
   }, []);
+
+  const loadSettings = async () => {
+    setIsLoading(true);
+    try {
+      // 1. Try to load from Supabase first
+      const { data, error } = await supabase
+        .from('clinic_settings')
+        .select('*')
+        .single();
+
+      if (data && !error) {
+        setDictationDuration(data.dictation_duration || 5);
+        setClinicName(data.clinic_name || 'Clínica Ortopédica Ove');
+        setLanguage(data.language || 'Español');
+        setAlertSound(data.alert_sound ?? true);
+        setDailyReminders(data.daily_reminders ?? true);
+        
+        // Update localStorage as backup
+        localStorage.setItem('dictation_duration', data.dictation_duration.toString());
+        localStorage.setItem('clinic_name', data.clinic_name);
+        localStorage.setItem('language', data.language);
+        localStorage.setItem('alert_sound', data.alert_sound.toString());
+        localStorage.setItem('daily_reminders', data.daily_reminders.toString());
+      } else {
+        // 2. Fallback to localStorage if Supabase fails or table doesn't exist
+        const savedDuration = localStorage.getItem('dictation_duration');
+        if (savedDuration) setDictationDuration(parseInt(savedDuration));
+
+        const savedClinicName = localStorage.getItem('clinic_name');
+        if (savedClinicName) setClinicName(savedClinicName);
+
+        const savedLanguage = localStorage.getItem('language');
+        if (savedLanguage) setLanguage(savedLanguage);
+
+        const savedAlertSound = localStorage.getItem('alert_sound');
+        if (savedAlertSound) setAlertSound(savedAlertSound === 'true');
+
+        const savedDailyReminders = localStorage.getItem('daily_reminders');
+        if (savedDailyReminders) setDailyReminders(savedDailyReminders === 'true');
+      }
+    } catch (err) {
+      console.log("Error loading settings from Supabase, using local storage");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleChangeDuration = (val: number) => {
     setDictationDuration(val);
@@ -58,21 +93,51 @@ export default function Settings() {
   const saveAllSettings = async () => {
     setIsSaving(true);
     
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    localStorage.setItem('dictation_duration', dictationDuration.toString());
-    localStorage.setItem('clinic_name', clinicName);
-    localStorage.setItem('language', language);
-    localStorage.setItem('alert_sound', alertSound.toString());
-    localStorage.setItem('daily_reminders', dailyReminders.toString());
-    
-    setIsSaving(false);
-    setHasChanges(false);
-    setShowSuccess(true);
-    
-    setTimeout(() => setShowSuccess(false), 3000);
+    try {
+      // 1. Save to LocalStorage (immediate)
+      localStorage.setItem('dictation_duration', dictationDuration.toString());
+      localStorage.setItem('clinic_name', clinicName);
+      localStorage.setItem('language', language);
+      localStorage.setItem('alert_sound', alertSound.toString());
+      localStorage.setItem('daily_reminders', dailyReminders.toString());
+
+      // 2. Try to save to Supabase
+      const settingsData = {
+        clinic_name: clinicName,
+        language: language,
+        dictation_duration: dictationDuration,
+        alert_sound: alertSound,
+        daily_reminders: dailyReminders,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('clinic_settings')
+        .upsert({ id: 'default-settings', ...settingsData });
+
+      if (error) throw error;
+
+    } catch (err) {
+      console.error("Error saving to Supabase:", err);
+      // We don't alert here because localStorage already worked
+    } finally {
+      setIsSaving(false);
+      setHasChanges(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-slate-500 font-medium">Cargando configuración...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 max-w-4xl pb-20">

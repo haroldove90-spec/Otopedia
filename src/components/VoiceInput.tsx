@@ -17,11 +17,17 @@ declare global {
 
 export default function VoiceInput({ onResult, label, value }: VoiceInputProps) {
   const [isRecording, setIsRecording] = useState(false);
+  const isRecordingRef = useRef(false);
   const [interimText, setInterimText] = useState('');
   const recognitionRef = useRef<any>(null);
   const initialValueRef = useRef('');
   const manuallyStoppedRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync isRecordingRef with isRecording state
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
 
   // Use a ref for onResult to avoid it being a dependency in useEffect
   const onResultRef = useRef(onResult);
@@ -74,26 +80,27 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
       };
 
       recognition.onerror = (event: any) => {
+        const errorType = event.error || '';
+        
         // Silently handle aborted and no-speech errors as they are common and benign
-        if (event.error === 'no-speech' || event.error === 'aborted') {
-          console.log(`Recognition ${event.error}, resetting state...`);
+        if (errorType === 'no-speech' || errorType === 'aborted' || errorType === 'network') {
+          console.log(`Recognition ${errorType}, resetting state...`);
           setIsRecording(false);
           setInterimText('');
           if (timeoutRef.current) clearTimeout(timeoutRef.current);
           return;
         }
 
-        console.error("Speech recognition error:", event.error);
-        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        console.error("Speech recognition error:", errorType);
+        if (errorType === 'not-allowed' || errorType === 'service-not-allowed') {
           alert("Acceso al micrófono denegado. Por favor, permite el uso del micrófono en la configuración de tu navegador.");
-        } else if (event.error === 'network') {
-          alert("Error de red. El dictado por voz requiere una conexión a internet activa.");
-        } else if (event.error === 'audio-capture') {
+        } else if (errorType === 'audio-capture') {
           alert("No se detectó ningún micrófono. Por favor, conecta uno e intenta de nuevo.");
         } else {
           // Only alert for other errors if we were actually recording
-          if (isRecording) {
-            alert(`Error de dictado: ${event.error}. Intenta de nuevo o abre la app en una pestaña nueva.`);
+          // Use isRecordingRef to avoid closure issues
+          if (isRecordingRef.current) {
+            alert(`Error de dictado: ${errorType}. Intenta de nuevo o abre la app en una pestaña nueva.`);
           }
         }
         setIsRecording(false);
@@ -126,12 +133,14 @@ export default function VoiceInput({ onResult, label, value }: VoiceInputProps) 
     };
   }, [label]); // Only depend on label, not onResult
 
-  const startRecording = () => {
+  const startRecording = async () => {
     if (recognitionRef.current) {
       try {
         // Stop any other active recognition globally
         if ((window as any).stopActiveRecognition && (window as any).stopActiveRecognition !== stopRecording) {
           (window as any).stopActiveRecognition();
+          // Small delay to allow the hardware to release
+          await new Promise(resolve => setTimeout(resolve, 300));
         }
         
         // Register this instance's stop function as the active one
